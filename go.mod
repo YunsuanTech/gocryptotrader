@@ -16,9 +16,9 @@ require (
 	github.com/thrasher-corp/goose v2.7.0-rc4.0.20191002032028-0f2c2a27abdb+incompatible
 	github.com/thrasher-corp/sqlboiler v1.0.1-0.20191001234224-71e17f37a85e
 	github.com/urfave/cli/v2 v2.27.5
-	golang.org/x/crypto v0.33.0
-	golang.org/x/term v0.29.0
-	golang.org/x/text v0.22.0
+	golang.org/x/crypto v0.36.0
+	golang.org/x/term v0.30.0
+	golang.org/x/text v0.23.0
 	golang.org/x/time v0.10.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250204164813-702378808489
 	google.golang.org/grpc v1.70.0
@@ -37,7 +37,7 @@ require (
 	github.com/volatiletech/sqlboiler v3.7.1+incompatible // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250204164813-702378808489 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
