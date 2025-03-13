@@ -1,0 +1,9 @@
+name: codespell
+on: [push, pull_request]
+jobs:
+  codespell:
+    name: Spell checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: codespell-project/actions-codespell@master

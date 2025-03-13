@@ -1,0 +1,220 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "rpc.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "GoCryptoTraderService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/getaccounts": {
+      "get": {
+        "operationId": "GoCryptoTraderService_GetAccounts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcGetAccountsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
+    "/v1/getinfo": {
+      "get": {
+        "operationId": "GoCryptoTraderService_GetInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcGetInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
+    "/v1/getrpcendpoints": {
+      "get": {
+        "operationId": "GoCryptoTraderService_GetRPCEndpoints",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcGetRPCEndpointsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "gctrpcAccount": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "exchangeAddressId": {
+          "type": "string"
+        },
+        "zkAddressId": {
+          "type": "string"
+        },
+        "f4AddressId": {
+          "type": "string"
+        },
+        "otAddressId": {
+          "type": "string"
+        },
+        "cipher": {
+          "type": "string"
+        },
+        "layer": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "chainName": {
+          "type": "string"
+        }
+      }
+    },
+    "gctrpcGetAccountsResponse": {
+      "type": "object",
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/gctrpcAccount"
+          }
+        }
+      }
+    },
+    "gctrpcGetInfoResponse": {
+      "type": "object",
+      "properties": {
+        "uptime": {
+          "type": "string"
+        },
+        "availableExchanges": {
+          "type": "string",
+          "format": "int64"
+        },
+        "enabledExchanges": {
+          "type": "string",
+          "format": "int64"
+        },
+        "defaultForexProvider": {
+          "type": "string"
+        },
+        "defaultFiatCurrency": {
+          "type": "string"
+        },
+        "subsystemStatus": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "rpcEndpoints": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/gctrpcRPCEndpoint"
+          }
+        }
+      }
+    },
+    "gctrpcGetRPCEndpointsResponse": {
+      "type": "object",
+      "properties": {
+        "endpoints": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/gctrpcRPCEndpoint"
+          }
+        }
+      }
+    },
+    "gctrpcRPCEndpoint": {
+      "type": "object",
+      "properties": {
+        "started": {
+          "type": "boolean"
+        },
+        "listenAddress": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

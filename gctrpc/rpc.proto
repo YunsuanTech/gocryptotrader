@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package gctrpc;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gocryptotrader/gctrpc";
+
+message GetInfoRequest {}
+
+message GetInfoResponse {
+  string uptime = 1;
+  int64 available_exchanges = 2;
+  int64 enabled_exchanges = 3;
+  string default_forex_provider = 4;
+  string default_fiat_currency = 5;
+  map<string, bool> subsystem_status = 6;
+  map<string, RPCEndpoint> rpc_endpoints = 7;
+}
+
+message RPCEndpoint {
+  bool started = 1;
+  string listen_address = 2;
+}
+
+message GetRPCEndpointsRequest {}
+
+message GetRPCEndpointsResponse {
+  map<string, RPCEndpoint> endpoints = 1;
+}
+
+message GetAccountsRequest {}
+
+message Account {
+  string name = 1;
+  string address = 2;
+  string exchange_address_id = 3;
+  string zk_address_id = 4;
+  string f4_address_id = 5;
+  string ot_address_id = 6;
+  string cipher = 7;
+  int32 layer = 8;
+  string owner = 9;
+  string chain_name = 10;
+}
+
+message GetAccountsResponse {
+  repeated Account accounts = 1;
+}
+
+service GoCryptoTraderService {
+  rpc GetInfo(GetInfoRequest) returns (GetInfoResponse) {
+    option (google.api.http) = {get: "/v1/getinfo"};
+  }
+
+  rpc GetRPCEndpoints(GetRPCEndpointsRequest) returns (GetRPCEndpointsResponse) {
+    option (google.api.http) = {get: "/v1/getrpcendpoints"};
+  }
+
+  rpc GetAccounts(GetAccountsRequest) returns (GetAccountsResponse) {
+    option (google.api.http) = {get: "/v1/getaccounts"};
+  }
+}
