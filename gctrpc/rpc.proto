@@ -49,6 +49,34 @@ message GetAccountsResponse {
   repeated Account accounts = 1;
 }
 
+message GetTokenPriceRequest {
+  string token_address = 1;
+}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+message TokenPrice {
+  string address = 1;
+  double usd_price = 2;
+  double sol_price = 3;
+  Timestamp last_update = 4;
+}
+
+message GetTokenPriceResponse {
+  TokenPrice token_price = 1;
+}
+
+message CryptoRequest {
+  string plaintext = 1;
+}
+
+message CryptoResponse {
+  string ciphertext = 1;
+}
+
 service GoCryptoTraderService {
   rpc GetInfo(GetInfoRequest) returns (GetInfoResponse) {
     option (google.api.http) = {get: "/v1/getinfo"};
@@ -60,5 +88,13 @@ service GoCryptoTraderService {
 
   rpc GetAccounts(GetAccountsRequest) returns (GetAccountsResponse) {
     option (google.api.http) = {get: "/v1/getaccounts"};
+  }
+  
+  rpc GetTokenPrice(GetTokenPriceRequest) returns (GetTokenPriceResponse) {
+    option (google.api.http) = {get: "/v1/gettokenprice"};
+  }
+
+  rpc Crypto(CryptoRequest) returns (CryptoResponse) {
+    option (google.api.http) = {post: "/v1/crypto"};
   }
 }

@@ -3,6 +3,8 @@
  "dataDirectory": "",
  "encryptConfig": 0,
  "globalHTTPTimeout": 15000000000,
+ "solisDbPem": "/Users/jie/.ssh/id_rsa",
+ "SubKey":"06cb90517d35061a38342e9cbcb6",
  "database": {
   "enabled": true,
   "verbose": true,
@@ -12,7 +14,7 @@
    "port": 0,
    "username": "",
    "password": "",
-   "database": "/Users/jie/projects/go-cryptotrader/gct.db",
+   "database": "/Users/jie/projects/gocryptotrader/gct.db",
    "sslmode": ""
   }
  },
@@ -260,7 +262,8 @@
    }
   ]
  },
- "exchanges": [
+ "exchanges": {
+  "exchangeList": [
   {
    "name": "BTC Markets",
    "enabled": true,
@@ -2401,4 +2404,5 @@
    "supportedExchanges": "Kraken,Bitstamp"
   }
  ]
+}
 }

@@ -88,6 +88,7 @@ type Config struct {
 	Version           int                 `json:"version"`
 	DataDirectory     string              `json:"dataDirectory"`
 	EncryptConfig     int                 `json:"encryptConfig"`
+	SolisDbPem        string              `json:"solisDbPem"`
 	GlobalHTTPTimeout time.Duration       `json:"globalHTTPTimeout"`
 	Database          database.Config     `json:"database"`
 	Logging           log.Config          `json:"logging"`

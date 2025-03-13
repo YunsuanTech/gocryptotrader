@@ -504,6 +504,320 @@ func (x *GetAccountsResponse) GetAccounts() []*Account {
 	return nil
 }
 
+type GetTokenPriceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	TokenAddress string `protobuf:"bytes,1,opt,name=token_address,json=tokenAddress,proto3" json:"token_address,omitempty"`
+}
+
+func (x *GetTokenPriceRequest) Reset() {
+	*x = GetTokenPriceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_rpc_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTokenPriceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTokenPriceRequest) ProtoMessage() {}
+
+func (x *GetTokenPriceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_rpc_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTokenPriceRequest.ProtoReflect.Descriptor instead.
+func (*GetTokenPriceRequest) Descriptor() ([]byte, []int) {
+	return file_rpc_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetTokenPriceRequest) GetTokenAddress() string {
+	if x != nil {
+		return x.TokenAddress
+	}
+	return ""
+}
+
+type Timestamp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Seconds int64 `protobuf:"varint,1,opt,name=seconds,proto3" json:"seconds,omitempty"`
+	Nanos   int32 `protobuf:"varint,2,opt,name=nanos,proto3" json:"nanos,omitempty"`
+}
+
+func (x *Timestamp) Reset() {
+	*x = Timestamp{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_rpc_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Timestamp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Timestamp) ProtoMessage() {}
+
+func (x *Timestamp) ProtoReflect() protoreflect.Message {
+	mi := &file_rpc_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Timestamp.ProtoReflect.Descriptor instead.
+func (*Timestamp) Descriptor() ([]byte, []int) {
+	return file_rpc_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Timestamp) GetSeconds() int64 {
+	if x != nil {
+		return x.Seconds
+	}
+	return 0
+}
+
+func (x *Timestamp) GetNanos() int32 {
+	if x != nil {
+		return x.Nanos
+	}
+	return 0
+}
+
+type TokenPrice struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Address    string     `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	UsdPrice   float64    `protobuf:"fixed64,2,opt,name=usd_price,json=usdPrice,proto3" json:"usd_price,omitempty"`
+	SolPrice   float64    `protobuf:"fixed64,3,opt,name=sol_price,json=solPrice,proto3" json:"sol_price,omitempty"`
+	LastUpdate *Timestamp `protobuf:"bytes,4,opt,name=last_update,json=lastUpdate,proto3" json:"last_update,omitempty"`
+}
+
+func (x *TokenPrice) Reset() {
+	*x = TokenPrice{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_rpc_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TokenPrice) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TokenPrice) ProtoMessage() {}
+
+func (x *TokenPrice) ProtoReflect() protoreflect.Message {
+	mi := &file_rpc_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TokenPrice.ProtoReflect.Descriptor instead.
+func (*TokenPrice) Descriptor() ([]byte, []int) {
+	return file_rpc_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *TokenPrice) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *TokenPrice) GetUsdPrice() float64 {
+	if x != nil {
+		return x.UsdPrice
+	}
+	return 0
+}
+
+func (x *TokenPrice) GetSolPrice() float64 {
+	if x != nil {
+		return x.SolPrice
+	}
+	return 0
+}
+
+func (x *TokenPrice) GetLastUpdate() *Timestamp {
+	if x != nil {
+		return x.LastUpdate
+	}
+	return nil
+}
+
+type GetTokenPriceResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	TokenPrice *TokenPrice `protobuf:"bytes,1,opt,name=token_price,json=tokenPrice,proto3" json:"token_price,omitempty"`
+}
+
+func (x *GetTokenPriceResponse) Reset() {
+	*x = GetTokenPriceResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_rpc_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetTokenPriceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTokenPriceResponse) ProtoMessage() {}
+
+func (x *GetTokenPriceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_rpc_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTokenPriceResponse.ProtoReflect.Descriptor instead.
+func (*GetTokenPriceResponse) Descriptor() ([]byte, []int) {
+	return file_rpc_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetTokenPriceResponse) GetTokenPrice() *TokenPrice {
+	if x != nil {
+		return x.TokenPrice
+	}
+	return nil
+}
+
+type CryptoRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Plaintext string `protobuf:"bytes,1,opt,name=plaintext,proto3" json:"plaintext,omitempty"`
+}
+
+func (x *CryptoRequest) Reset() {
+	*x = CryptoRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_rpc_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CryptoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CryptoRequest) ProtoMessage() {}
+
+func (x *CryptoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_rpc_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CryptoRequest.ProtoReflect.Descriptor instead.
+func (*CryptoRequest) Descriptor() ([]byte, []int) {
+	return file_rpc_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *CryptoRequest) GetPlaintext() string {
+	if x != nil {
+		return x.Plaintext
+	}
+	return ""
+}
+
+type CryptoResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Ciphertext string `protobuf:"bytes,1,opt,name=ciphertext,proto3" json:"ciphertext,omitempty"`
+}
+
+func (x *CryptoResponse) Reset() {
+	*x = CryptoResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_rpc_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CryptoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CryptoResponse) ProtoMessage() {}
+
+func (x *CryptoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_rpc_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CryptoResponse.ProtoReflect.Descriptor instead.
+func (*CryptoResponse) Descriptor() ([]byte, []int) {
+	return file_rpc_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *CryptoResponse) GetCiphertext() string {
+	if x != nil {
+		return x.Ciphertext
+	}
+	return ""
+}
+
 var File_rpc_proto protoreflect.FileDescriptor
 
 var file_rpc_proto_rawDesc = []byte{
@@ -592,7 +906,35 @@ var file_rpc_proto_rawDesc = []byte{
 	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2b, 0x0a, 0x08, 0x61, 0x63, 0x63, 0x6f,
 	0x75, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x67, 0x63, 0x74,
 	0x72, 0x70, 0x63, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x52, 0x08, 0x61, 0x63, 0x63,
-	0x6f, 0x75, 0x6e, 0x74, 0x73, 0x32, 0xba, 0x02, 0x0a, 0x15, 0x47, 0x6f, 0x43, 0x72, 0x79, 0x70,
+	0x6f, 0x75, 0x6e, 0x74, 0x73, 0x22, 0x3b, 0x0a, 0x14, 0x47, 0x65, 0x74, 0x54, 0x6f, 0x6b, 0x65,
+	0x6e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a,
+	0x0d, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65,
+	0x73, 0x73, 0x22, 0x3b, 0x0a, 0x09, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12,
+	0x18, 0x0a, 0x07, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x07, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x6e, 0x61, 0x6e,
+	0x6f, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6e, 0x61, 0x6e, 0x6f, 0x73, 0x22,
+	0x94, 0x01, 0x0a, 0x0a, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x12, 0x18,
+	0x0a, 0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x07, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x1b, 0x0a, 0x09, 0x75, 0x73, 0x64, 0x5f,
+	0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x01, 0x52, 0x08, 0x75, 0x73, 0x64,
+	0x50, 0x72, 0x69, 0x63, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x6f, 0x6c, 0x5f, 0x70, 0x72, 0x69,
+	0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x01, 0x52, 0x08, 0x73, 0x6f, 0x6c, 0x50, 0x72, 0x69,
+	0x63, 0x65, 0x12, 0x32, 0x0a, 0x0b, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x75, 0x70, 0x64, 0x61, 0x74,
+	0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x11, 0x2e, 0x67, 0x63, 0x74, 0x72, 0x70, 0x63,
+	0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x0a, 0x6c, 0x61, 0x73, 0x74,
+	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x22, 0x4c, 0x0a, 0x15, 0x47, 0x65, 0x74, 0x54, 0x6f, 0x6b,
+	0x65, 0x6e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x33, 0x0a, 0x0b, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x67, 0x63, 0x74, 0x72, 0x70, 0x63, 0x2e, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x52, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x50,
+	0x72, 0x69, 0x63, 0x65, 0x22, 0x2d, 0x0a, 0x0d, 0x43, 0x72, 0x79, 0x70, 0x74, 0x6f, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x70, 0x6c, 0x61, 0x69, 0x6e, 0x74, 0x65,
+	0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x6c, 0x61, 0x69, 0x6e, 0x74,
+	0x65, 0x78, 0x74, 0x22, 0x30, 0x0a, 0x0e, 0x43, 0x72, 0x79, 0x70, 0x74, 0x6f, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x69, 0x70, 0x68, 0x65, 0x72, 0x74,
+	0x65, 0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x69, 0x70, 0x68, 0x65,
+	0x72, 0x74, 0x65, 0x78, 0x74, 0x32, 0xf0, 0x03, 0x0a, 0x15, 0x47, 0x6f, 0x43, 0x72, 0x79, 0x70,
 	0x74, 0x6f, 0x54, 0x72, 0x61, 0x64, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12,
 	0x4f, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x16, 0x2e, 0x67, 0x63, 0x74,
 	0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65,
@@ -612,9 +954,20 @@ var file_rpc_proto_rawDesc = []byte{
 	0x63, 0x74, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
 	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x17, 0x82, 0xd3, 0xe4, 0x93, 0x02,
 	0x11, 0x12, 0x0f, 0x2f, 0x76, 0x31, 0x2f, 0x67, 0x65, 0x74, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e,
-	0x74, 0x73, 0x42, 0x17, 0x5a, 0x15, 0x67, 0x6f, 0x63, 0x72, 0x79, 0x70, 0x74, 0x6f, 0x74, 0x72,
-	0x61, 0x64, 0x65, 0x72, 0x2f, 0x67, 0x63, 0x74, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x74, 0x73, 0x12, 0x67, 0x0a, 0x0d, 0x47, 0x65, 0x74, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x50, 0x72,
+	0x69, 0x63, 0x65, 0x12, 0x1c, 0x2e, 0x67, 0x63, 0x74, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74,
+	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x1d, 0x2e, 0x67, 0x63, 0x74, 0x72, 0x70, 0x63, 0x2e, 0x47, 0x65, 0x74, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x19, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x13, 0x12, 0x11, 0x2f, 0x76, 0x31, 0x2f, 0x67, 0x65,
+	0x74, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x70, 0x72, 0x69, 0x63, 0x65, 0x12, 0x4b, 0x0a, 0x06, 0x43,
+	0x72, 0x79, 0x70, 0x74, 0x6f, 0x12, 0x15, 0x2e, 0x67, 0x63, 0x74, 0x72, 0x70, 0x63, 0x2e, 0x43,
+	0x72, 0x79, 0x70, 0x74, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x67,
+	0x63, 0x74, 0x72, 0x70, 0x63, 0x2e, 0x43, 0x72, 0x79, 0x70, 0x74, 0x6f, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x12, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x0c, 0x22, 0x0a, 0x2f, 0x76,
+	0x31, 0x2f, 0x63, 0x72, 0x79, 0x70, 0x74, 0x6f, 0x42, 0x17, 0x5a, 0x15, 0x67, 0x6f, 0x63, 0x72,
+	0x79, 0x70, 0x74, 0x6f, 0x74, 0x72, 0x61, 0x64, 0x65, 0x72, 0x2f, 0x67, 0x63, 0x74, 0x72, 0x70,
+	0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -629,7 +982,7 @@ func file_rpc_proto_rawDescGZIP() []byte {
 	return file_rpc_proto_rawDescData
 }
 
-var file_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_rpc_proto_goTypes = []interface{}{
 	(*GetInfoRequest)(nil),          // 0: gctrpc.GetInfoRequest
 	(*GetInfoResponse)(nil),         // 1: gctrpc.GetInfoResponse
@@ -639,28 +992,40 @@ var file_rpc_proto_goTypes = []interface{}{
 	(*GetAccountsRequest)(nil),      // 5: gctrpc.GetAccountsRequest
 	(*Account)(nil),                 // 6: gctrpc.Account
 	(*GetAccountsResponse)(nil),     // 7: gctrpc.GetAccountsResponse
-	nil,                             // 8: gctrpc.GetInfoResponse.SubsystemStatusEntry
-	nil,                             // 9: gctrpc.GetInfoResponse.RpcEndpointsEntry
-	nil,                             // 10: gctrpc.GetRPCEndpointsResponse.EndpointsEntry
+	(*GetTokenPriceRequest)(nil),    // 8: gctrpc.GetTokenPriceRequest
+	(*Timestamp)(nil),               // 9: gctrpc.Timestamp
+	(*TokenPrice)(nil),              // 10: gctrpc.TokenPrice
+	(*GetTokenPriceResponse)(nil),   // 11: gctrpc.GetTokenPriceResponse
+	(*CryptoRequest)(nil),           // 12: gctrpc.CryptoRequest
+	(*CryptoResponse)(nil),          // 13: gctrpc.CryptoResponse
+	nil,                             // 14: gctrpc.GetInfoResponse.SubsystemStatusEntry
+	nil,                             // 15: gctrpc.GetInfoResponse.RpcEndpointsEntry
+	nil,                             // 16: gctrpc.GetRPCEndpointsResponse.EndpointsEntry
 }
 var file_rpc_proto_depIdxs = []int32{
-	8,  // 0: gctrpc.GetInfoResponse.subsystem_status:type_name -> gctrpc.GetInfoResponse.SubsystemStatusEntry
-	9,  // 1: gctrpc.GetInfoResponse.rpc_endpoints:type_name -> gctrpc.GetInfoResponse.RpcEndpointsEntry
-	10, // 2: gctrpc.GetRPCEndpointsResponse.endpoints:type_name -> gctrpc.GetRPCEndpointsResponse.EndpointsEntry
+	14, // 0: gctrpc.GetInfoResponse.subsystem_status:type_name -> gctrpc.GetInfoResponse.SubsystemStatusEntry
+	15, // 1: gctrpc.GetInfoResponse.rpc_endpoints:type_name -> gctrpc.GetInfoResponse.RpcEndpointsEntry
+	16, // 2: gctrpc.GetRPCEndpointsResponse.endpoints:type_name -> gctrpc.GetRPCEndpointsResponse.EndpointsEntry
 	6,  // 3: gctrpc.GetAccountsResponse.accounts:type_name -> gctrpc.Account
-	2,  // 4: gctrpc.GetInfoResponse.RpcEndpointsEntry.value:type_name -> gctrpc.RPCEndpoint
-	2,  // 5: gctrpc.GetRPCEndpointsResponse.EndpointsEntry.value:type_name -> gctrpc.RPCEndpoint
-	0,  // 6: gctrpc.GoCryptoTraderService.GetInfo:input_type -> gctrpc.GetInfoRequest
-	3,  // 7: gctrpc.GoCryptoTraderService.GetRPCEndpoints:input_type -> gctrpc.GetRPCEndpointsRequest
-	5,  // 8: gctrpc.GoCryptoTraderService.GetAccounts:input_type -> gctrpc.GetAccountsRequest
-	1,  // 9: gctrpc.GoCryptoTraderService.GetInfo:output_type -> gctrpc.GetInfoResponse
-	4,  // 10: gctrpc.GoCryptoTraderService.GetRPCEndpoints:output_type -> gctrpc.GetRPCEndpointsResponse
-	7,  // 11: gctrpc.GoCryptoTraderService.GetAccounts:output_type -> gctrpc.GetAccountsResponse
-	9,  // [9:12] is the sub-list for method output_type
-	6,  // [6:9] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	9,  // 4: gctrpc.TokenPrice.last_update:type_name -> gctrpc.Timestamp
+	10, // 5: gctrpc.GetTokenPriceResponse.token_price:type_name -> gctrpc.TokenPrice
+	2,  // 6: gctrpc.GetInfoResponse.RpcEndpointsEntry.value:type_name -> gctrpc.RPCEndpoint
+	2,  // 7: gctrpc.GetRPCEndpointsResponse.EndpointsEntry.value:type_name -> gctrpc.RPCEndpoint
+	0,  // 8: gctrpc.GoCryptoTraderService.GetInfo:input_type -> gctrpc.GetInfoRequest
+	3,  // 9: gctrpc.GoCryptoTraderService.GetRPCEndpoints:input_type -> gctrpc.GetRPCEndpointsRequest
+	5,  // 10: gctrpc.GoCryptoTraderService.GetAccounts:input_type -> gctrpc.GetAccountsRequest
+	8,  // 11: gctrpc.GoCryptoTraderService.GetTokenPrice:input_type -> gctrpc.GetTokenPriceRequest
+	12, // 12: gctrpc.GoCryptoTraderService.Crypto:input_type -> gctrpc.CryptoRequest
+	1,  // 13: gctrpc.GoCryptoTraderService.GetInfo:output_type -> gctrpc.GetInfoResponse
+	4,  // 14: gctrpc.GoCryptoTraderService.GetRPCEndpoints:output_type -> gctrpc.GetRPCEndpointsResponse
+	7,  // 15: gctrpc.GoCryptoTraderService.GetAccounts:output_type -> gctrpc.GetAccountsResponse
+	11, // 16: gctrpc.GoCryptoTraderService.GetTokenPrice:output_type -> gctrpc.GetTokenPriceResponse
+	13, // 17: gctrpc.GoCryptoTraderService.Crypto:output_type -> gctrpc.CryptoResponse
+	13, // [13:18] is the sub-list for method output_type
+	8,  // [8:13] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_rpc_proto_init() }
@@ -765,6 +1130,78 @@ func file_rpc_proto_init() {
 				return nil
 			}
 		}
+		file_rpc_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetTokenPriceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_rpc_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Timestamp); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_rpc_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TokenPrice); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_rpc_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetTokenPriceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_rpc_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CryptoRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_rpc_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CryptoResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -772,7 +1209,7 @@ func file_rpc_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_rpc_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

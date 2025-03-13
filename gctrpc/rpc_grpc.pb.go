@@ -22,6 +22,8 @@ const (
 	GoCryptoTraderService_GetInfo_FullMethodName         = "/gctrpc.GoCryptoTraderService/GetInfo"
 	GoCryptoTraderService_GetRPCEndpoints_FullMethodName = "/gctrpc.GoCryptoTraderService/GetRPCEndpoints"
 	GoCryptoTraderService_GetAccounts_FullMethodName     = "/gctrpc.GoCryptoTraderService/GetAccounts"
+	GoCryptoTraderService_GetTokenPrice_FullMethodName   = "/gctrpc.GoCryptoTraderService/GetTokenPrice"
+	GoCryptoTraderService_Crypto_FullMethodName          = "/gctrpc.GoCryptoTraderService/Crypto"
 )
 
 // GoCryptoTraderServiceClient is the client API for GoCryptoTraderService service.
@@ -31,6 +33,8 @@ type GoCryptoTraderServiceClient interface {
 	GetInfo(ctx context.Context, in *GetInfoRequest, opts ...grpc.CallOption) (*GetInfoResponse, error)
 	GetRPCEndpoints(ctx context.Context, in *GetRPCEndpointsRequest, opts ...grpc.CallOption) (*GetRPCEndpointsResponse, error)
 	GetAccounts(ctx context.Context, in *GetAccountsRequest, opts ...grpc.CallOption) (*GetAccountsResponse, error)
+	GetTokenPrice(ctx context.Context, in *GetTokenPriceRequest, opts ...grpc.CallOption) (*GetTokenPriceResponse, error)
+	Crypto(ctx context.Context, in *CryptoRequest, opts ...grpc.CallOption) (*CryptoResponse, error)
 }
 
 type goCryptoTraderServiceClient struct {
@@ -71,6 +75,26 @@ func (c *goCryptoTraderServiceClient) GetAccounts(ctx context.Context, in *GetAc
 	return out, nil
 }
 
+func (c *goCryptoTraderServiceClient) GetTokenPrice(ctx context.Context, in *GetTokenPriceRequest, opts ...grpc.CallOption) (*GetTokenPriceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTokenPriceResponse)
+	err := c.cc.Invoke(ctx, GoCryptoTraderService_GetTokenPrice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goCryptoTraderServiceClient) Crypto(ctx context.Context, in *CryptoRequest, opts ...grpc.CallOption) (*CryptoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CryptoResponse)
+	err := c.cc.Invoke(ctx, GoCryptoTraderService_Crypto_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GoCryptoTraderServiceServer is the server API for GoCryptoTraderService service.
 // All implementations must embed UnimplementedGoCryptoTraderServiceServer
 // for forward compatibility.
@@ -78,6 +102,8 @@ type GoCryptoTraderServiceServer interface {
 	GetInfo(context.Context, *GetInfoRequest) (*GetInfoResponse, error)
 	GetRPCEndpoints(context.Context, *GetRPCEndpointsRequest) (*GetRPCEndpointsResponse, error)
 	GetAccounts(context.Context, *GetAccountsRequest) (*GetAccountsResponse, error)
+	GetTokenPrice(context.Context, *GetTokenPriceRequest) (*GetTokenPriceResponse, error)
+	Crypto(context.Context, *CryptoRequest) (*CryptoResponse, error)
 	mustEmbedUnimplementedGoCryptoTraderServiceServer()
 }
 
@@ -96,6 +122,12 @@ func (UnimplementedGoCryptoTraderServiceServer) GetRPCEndpoints(context.Context,
 }
 func (UnimplementedGoCryptoTraderServiceServer) GetAccounts(context.Context, *GetAccountsRequest) (*GetAccountsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccounts not implemented")
+}
+func (UnimplementedGoCryptoTraderServiceServer) GetTokenPrice(context.Context, *GetTokenPriceRequest) (*GetTokenPriceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTokenPrice not implemented")
+}
+func (UnimplementedGoCryptoTraderServiceServer) Crypto(context.Context, *CryptoRequest) (*CryptoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Crypto not implemented")
 }
 func (UnimplementedGoCryptoTraderServiceServer) mustEmbedUnimplementedGoCryptoTraderServiceServer() {}
 func (UnimplementedGoCryptoTraderServiceServer) testEmbeddedByValue()                               {}
@@ -172,6 +204,42 @@ func _GoCryptoTraderService_GetAccounts_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoCryptoTraderService_GetTokenPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTokenPriceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServiceServer).GetTokenPrice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoCryptoTraderService_GetTokenPrice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServiceServer).GetTokenPrice(ctx, req.(*GetTokenPriceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoCryptoTraderService_Crypto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CryptoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServiceServer).Crypto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoCryptoTraderService_Crypto_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServiceServer).Crypto(ctx, req.(*CryptoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GoCryptoTraderService_ServiceDesc is the grpc.ServiceDesc for GoCryptoTraderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +258,14 @@ var GoCryptoTraderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccounts",
 			Handler:    _GoCryptoTraderService_GetAccounts_Handler,
+		},
+		{
+			MethodName: "GetTokenPrice",
+			Handler:    _GoCryptoTraderService_GetTokenPrice_Handler,
+		},
+		{
+			MethodName: "Crypto",
+			Handler:    _GoCryptoTraderService_Crypto_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

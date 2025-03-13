@@ -1,16 +1,17 @@
 package engine
 
 import (
-	"context"
-	"errors"
+	context "context"
+	errors "errors"
 	"gocryptotrader/common/crypto"
 	"gocryptotrader/exchanges/request"
+	"gocryptotrader/exchanges/token"
 	"gocryptotrader/log"
-	"net"
-	"net/http"
-	"path/filepath"
-	"strings"
-	"time"
+	net "net"
+	http "net/http"
+	filepath "path/filepath"
+	strings "strings"
+	time "time"
 
 	"google.golang.org/grpc/metadata"
 
@@ -51,37 +52,6 @@ var (
 type RPCServer struct {
 	gctrpc.UnimplementedGoCryptoTraderServiceServer
 	*Engine
-	accountManager *account.Manager
-}
-
-// GetAccounts 获取所有账户信息
-func (s *RPCServer) GetAccounts(ctx context.Context, req *gctrpc.GetAccountsRequest) (*gctrpc.GetAccountsResponse, error) {
-	if s.accountManager == nil {
-		s.accountManager = account.New()
-	}
-
-	accounts, err := s.accountManager.Accounts()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &gctrpc.GetAccountsResponse{}
-	for _, acc := range accounts {
-		response.Accounts = append(response.Accounts, &gctrpc.Account{
-			Name:              acc.Name,
-			Address:           acc.Address,
-			ExchangeAddressId: acc.ExchangeAddressID,
-			ZkAddressId:       acc.ZkAddressID,
-			F4AddressId:       acc.F4AddressID,
-			OtAddressId:       acc.OTAddressID,
-			Cipher:            acc.Cipher,
-			Layer:             int32(acc.Layer),
-			Owner:             acc.Owner,
-			ChainName:         acc.ChainName,
-		})
-	}
-
-	return response, nil
 }
 
 func (s *RPCServer) authenticateClient(ctx context.Context) (context.Context, error) {
@@ -217,4 +187,77 @@ func (s *RPCServer) authClient(handler http.Handler) http.Handler {
 		}
 		handler.ServeHTTP(w, r)
 	})
+}
+
+// GetAccounts 获取所有账户信息
+func (s *RPCServer) GetAccounts(ctx context.Context, req *gctrpc.GetAccountsRequest) (*gctrpc.GetAccountsResponse, error) {
+
+	accountManager := account.New(s.Config)
+
+	accounts, err := accountManager.Accounts()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &gctrpc.GetAccountsResponse{}
+	for _, acc := range accounts {
+		response.Accounts = append(response.Accounts, &gctrpc.Account{
+			Name:              acc.Name,
+			Address:           acc.Address,
+			ExchangeAddressId: acc.ExchangeAddressID,
+			ZkAddressId:       acc.ZkAddressID,
+			F4AddressId:       acc.F4AddressID,
+			OtAddressId:       acc.OTAddressID,
+			Cipher:            acc.Cipher,
+			Layer:             int32(acc.Layer),
+			Owner:             acc.Owner,
+			ChainName:         acc.ChainName,
+		})
+	}
+
+	return response, nil
+}
+
+// GetTokenPrice 获取代币价格信息
+func (s *RPCServer) GetTokenPrice(ctx context.Context, req *gctrpc.GetTokenPriceRequest) (*gctrpc.GetTokenPriceResponse, error) {
+	if req.TokenAddress == "" {
+		return nil, errors.New("token address cannot be empty")
+	}
+
+	tokenPrice, err := token.GetTokenPrice(req.TokenAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &gctrpc.GetTokenPriceResponse{
+		TokenPrice: &gctrpc.TokenPrice{
+			Address:  tokenPrice.Address,
+			UsdPrice: tokenPrice.USDPrice,
+			SolPrice: tokenPrice.SOLPrice,
+			LastUpdate: &gctrpc.Timestamp{
+				Seconds: tokenPrice.LastUpdate.Unix(),
+				Nanos:   int32(tokenPrice.LastUpdate.Nanosecond()),
+			},
+		},
+	}
+
+	return response, nil
+}
+
+// Crypto 实现加密服务
+func (s *RPCServer) Crypto(ctx context.Context, req *gctrpc.CryptoRequest) (*gctrpc.CryptoResponse, error) {
+	if req.Plaintext == "" {
+		return nil, errors.New("enter a partial private key")
+	}
+
+	accountManager := account.New(s.Config)
+
+	ciphertext, err := accountManager.Crypto(req.Plaintext)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gctrpc.CryptoResponse{
+		Ciphertext: ciphertext,
+	}, nil
 }

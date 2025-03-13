@@ -124,6 +124,8 @@ func main() {
 	}
 	app.Commands = []*cli.Command{
 		getAccountsCommand,
+		getTokenPriceCommand,
+		cryptoCommand,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

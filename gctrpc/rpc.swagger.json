@@ -16,6 +16,36 @@
     "application/json"
   ],
   "paths": {
+    "/v1/crypto": {
+      "post": {
+        "operationId": "GoCryptoTraderService_Crypto",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcCryptoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "plaintext",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
     "/v1/getaccounts": {
       "get": {
         "operationId": "GoCryptoTraderService_GetAccounts",
@@ -81,6 +111,36 @@
           "GoCryptoTraderService"
         ]
       }
+    },
+    "/v1/gettokenprice": {
+      "get": {
+        "operationId": "GoCryptoTraderService_GetTokenPrice",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcGetTokenPriceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tokenAddress",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -116,6 +176,14 @@
           "type": "string"
         },
         "chainName": {
+          "type": "string"
+        }
+      }
+    },
+    "gctrpcCryptoResponse": {
+      "type": "object",
+      "properties": {
+        "ciphertext": {
           "type": "string"
         }
       }
@@ -177,6 +245,14 @@
         }
       }
     },
+    "gctrpcGetTokenPriceResponse": {
+      "type": "object",
+      "properties": {
+        "tokenPrice": {
+          "$ref": "#/definitions/gctrpcTokenPrice"
+        }
+      }
+    },
     "gctrpcRPCEndpoint": {
       "type": "object",
       "properties": {
@@ -185,6 +261,38 @@
         },
         "listenAddress": {
           "type": "string"
+        }
+      }
+    },
+    "gctrpcTimestamp": {
+      "type": "object",
+      "properties": {
+        "seconds": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nanos": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "gctrpcTokenPrice": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "usdPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "solPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "lastUpdate": {
+          "$ref": "#/definitions/gctrpcTimestamp"
         }
       }
     },

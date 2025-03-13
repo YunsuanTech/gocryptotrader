@@ -1,18 +1,27 @@
 package account
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"reflect"
 
+	"gocryptotrader/config"
 	accountsql "gocryptotrader/database/repository/account"
 )
 
 // Manager 管理账户相关操作
-type Manager struct{}
+type Manager struct {
+	config *config.Config
+}
 
 // New 创建一个新的账户管理器
-func New() *Manager {
-	return &Manager{}
+func New(cfg *config.Config) *Manager {
+	return &Manager{config: cfg}
 }
 
 // Accounts 获取所有账户信息
@@ -197,42 +206,70 @@ func (m *Manager) GetAccountByName(name string) (*Account, error) {
 	return accountObj, nil
 }
 
-// CreateAccount 创建新账户
-// 参数验证并创建新的账户记录
-func (m *Manager) CreateAccount(name, address, exchangeAddressID, zkAddressID, f4AddressID, otAddressID, cipher string, layer int, owner, chainName string) error {
-	// 参数验证
-	if err := validateAccountParams(name, address, layer); err != nil {
-		return err
-	}
-
-	// 检查账户名是否已存在
-	existingAccount, err := m.GetAccountByName(name)
-	if err == nil && existingAccount != nil {
-		return fmt.Errorf("账户名 '%s' 已存在", name)
-	}
-
-	// 调用数据库层创建账户
-	err = accountsql.Account(name, address, exchangeAddressID, zkAddressID, f4AddressID, otAddressID, cipher, layer, owner, chainName)
+func (m *Manager) Crypto(ciphertestStr string) (string, error) {
+	// 从配置中获取私钥文件路径
+	privateKeyFile, err := ioutil.ReadFile(m.config.SolisDbPem)
 	if err != nil {
-		return fmt.Errorf("创建账户失败: %w", err)
+		fmt.Println("Error opening private key file:", err)
+		return "", err
 	}
 
-	return nil
+	block, _ := pem.Decode(privateKeyFile)
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		fmt.Println("Invalid private key file")
+		return "", err
+	}
+
+	parsedPrivateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		fmt.Println("Error parsing private key:", err)
+		return "", err
+	}
+	// 待加密的原文
+	plaintext := ciphertestStr
+	// 加密
+	ciphertext, err := rsa.EncryptPKCS1v15(rand.Reader, &parsedPrivateKey.PublicKey, []byte(plaintext))
+	if err != nil {
+		fmt.Println("Error encrypting:", err)
+		return "", err
+	}
+
+	// 将密文转换为字符串形式
+	ciphertextStr := base64.StdEncoding.EncodeToString(ciphertext)
+	return ciphertextStr, nil
+
 }
 
-// validateAccountParams 验证账户参数
-func validateAccountParams(name, address string, layer int) error {
-	if name == "" {
-		return fmt.Errorf("账户名称不能为空")
+func (m *Manager) Decrypt(ciphertextStr string) (string, error) {
+	// 从配置中获取私钥文件路径
+	privateKeyFile, err := ioutil.ReadFile(m.config.SolisDbPem)
+	if err != nil {
+		fmt.Println("Error opening private key file:", err)
+		return "", fmt.Errorf("error opening private key file:", err)
 	}
 
-	if address == "" {
-		return fmt.Errorf("地址不能为空")
+	block, _ := pem.Decode(privateKeyFile)
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		fmt.Println("Invalid private key file")
+		return "", fmt.Errorf("invalid private key file")
 	}
 
-	if layer < 0 {
-		return fmt.Errorf("层级不能为负数")
+	parsedPrivateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		fmt.Println("Error parsing private key:", err)
+		return "", fmt.Errorf("error parsing private key:", err)
 	}
 
-	return nil
+	// 解密
+	decodedCiphertext, err := base64.StdEncoding.DecodeString(ciphertextStr)
+	if err != nil {
+		fmt.Println("Error decoding ciphertext:", err)
+		return "", fmt.Errorf("error decoding ciphertext:", err)
+	}
+	decryptedPlaintext, err := rsa.DecryptPKCS1v15(rand.Reader, parsedPrivateKey, decodedCiphertext)
+	if err != nil {
+		fmt.Println("Error decrypting:", err)
+		return "", fmt.Errorf("error decrypting:", err)
+	}
+	return string(decryptedPlaintext), nil
 }
