@@ -15,7 +15,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/thrasher-corp/goose v2.7.0-rc4.0.20191002032028-0f2c2a27abdb+incompatible
 	github.com/thrasher-corp/sqlboiler v1.0.1-0.20191001234224-71e17f37a85e
-	github.com/urfave/cli/v2 v2.27.5
+	github.com/urfave/cli/v2 v2.27.6
 	golang.org/x/crypto v0.33.0
 	golang.org/x/term v0.29.0
 	golang.org/x/text v0.22.0
