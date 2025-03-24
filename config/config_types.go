@@ -89,6 +89,8 @@ type Config struct {
 	DataDirectory     string              `json:"dataDirectory"`
 	EncryptConfig     int                 `json:"encryptConfig"`
 	SolisDbPem        string              `json:"solisDbPem"`
+	SubKey            string              `json:"subKey"`
+	FilePath          string              `json:"filePath"`
 	GlobalHTTPTimeout time.Duration       `json:"globalHTTPTimeout"`
 	Database          database.Config     `json:"database"`
 	Logging           log.Config          `json:"logging"`

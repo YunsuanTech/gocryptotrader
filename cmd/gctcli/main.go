@@ -126,6 +126,8 @@ func main() {
 		getAccountsCommand,
 		getTokenPriceCommand,
 		cryptoCommand,
+		transferSOLCommand,
+		transferTokenCommand,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

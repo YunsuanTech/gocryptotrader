@@ -24,6 +24,8 @@ const (
 	GoCryptoTraderService_GetAccounts_FullMethodName     = "/gctrpc.GoCryptoTraderService/GetAccounts"
 	GoCryptoTraderService_GetTokenPrice_FullMethodName   = "/gctrpc.GoCryptoTraderService/GetTokenPrice"
 	GoCryptoTraderService_Crypto_FullMethodName          = "/gctrpc.GoCryptoTraderService/Crypto"
+	GoCryptoTraderService_TransferSOL_FullMethodName     = "/gctrpc.GoCryptoTraderService/TransferSOL"
+	GoCryptoTraderService_TransferToken_FullMethodName   = "/gctrpc.GoCryptoTraderService/TransferToken"
 )
 
 // GoCryptoTraderServiceClient is the client API for GoCryptoTraderService service.
@@ -35,6 +37,8 @@ type GoCryptoTraderServiceClient interface {
 	GetAccounts(ctx context.Context, in *GetAccountsRequest, opts ...grpc.CallOption) (*GetAccountsResponse, error)
 	GetTokenPrice(ctx context.Context, in *GetTokenPriceRequest, opts ...grpc.CallOption) (*GetTokenPriceResponse, error)
 	Crypto(ctx context.Context, in *CryptoRequest, opts ...grpc.CallOption) (*CryptoResponse, error)
+	TransferSOL(ctx context.Context, in *TransferSOLRequest, opts ...grpc.CallOption) (*TransferSOLResponse, error)
+	TransferToken(ctx context.Context, in *TransferTokenRequest, opts ...grpc.CallOption) (*TransferTokenResponse, error)
 }
 
 type goCryptoTraderServiceClient struct {
@@ -95,6 +99,26 @@ func (c *goCryptoTraderServiceClient) Crypto(ctx context.Context, in *CryptoRequ
 	return out, nil
 }
 
+func (c *goCryptoTraderServiceClient) TransferSOL(ctx context.Context, in *TransferSOLRequest, opts ...grpc.CallOption) (*TransferSOLResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TransferSOLResponse)
+	err := c.cc.Invoke(ctx, GoCryptoTraderService_TransferSOL_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goCryptoTraderServiceClient) TransferToken(ctx context.Context, in *TransferTokenRequest, opts ...grpc.CallOption) (*TransferTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TransferTokenResponse)
+	err := c.cc.Invoke(ctx, GoCryptoTraderService_TransferToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GoCryptoTraderServiceServer is the server API for GoCryptoTraderService service.
 // All implementations must embed UnimplementedGoCryptoTraderServiceServer
 // for forward compatibility.
@@ -104,6 +128,8 @@ type GoCryptoTraderServiceServer interface {
 	GetAccounts(context.Context, *GetAccountsRequest) (*GetAccountsResponse, error)
 	GetTokenPrice(context.Context, *GetTokenPriceRequest) (*GetTokenPriceResponse, error)
 	Crypto(context.Context, *CryptoRequest) (*CryptoResponse, error)
+	TransferSOL(context.Context, *TransferSOLRequest) (*TransferSOLResponse, error)
+	TransferToken(context.Context, *TransferTokenRequest) (*TransferTokenResponse, error)
 	mustEmbedUnimplementedGoCryptoTraderServiceServer()
 }
 
@@ -128,6 +154,12 @@ func (UnimplementedGoCryptoTraderServiceServer) GetTokenPrice(context.Context, *
 }
 func (UnimplementedGoCryptoTraderServiceServer) Crypto(context.Context, *CryptoRequest) (*CryptoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Crypto not implemented")
+}
+func (UnimplementedGoCryptoTraderServiceServer) TransferSOL(context.Context, *TransferSOLRequest) (*TransferSOLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TransferSOL not implemented")
+}
+func (UnimplementedGoCryptoTraderServiceServer) TransferToken(context.Context, *TransferTokenRequest) (*TransferTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TransferToken not implemented")
 }
 func (UnimplementedGoCryptoTraderServiceServer) mustEmbedUnimplementedGoCryptoTraderServiceServer() {}
 func (UnimplementedGoCryptoTraderServiceServer) testEmbeddedByValue()                               {}
@@ -240,6 +272,42 @@ func _GoCryptoTraderService_Crypto_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoCryptoTraderService_TransferSOL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferSOLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServiceServer).TransferSOL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoCryptoTraderService_TransferSOL_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServiceServer).TransferSOL(ctx, req.(*TransferSOLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoCryptoTraderService_TransferToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServiceServer).TransferToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoCryptoTraderService_TransferToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServiceServer).TransferToken(ctx, req.(*TransferTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GoCryptoTraderService_ServiceDesc is the grpc.ServiceDesc for GoCryptoTraderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -266,6 +334,14 @@ var GoCryptoTraderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Crypto",
 			Handler:    _GoCryptoTraderService_Crypto_Handler,
+		},
+		{
+			MethodName: "TransferSOL",
+			Handler:    _GoCryptoTraderService_TransferSOL_Handler,
+		},
+		{
+			MethodName: "TransferToken",
+			Handler:    _GoCryptoTraderService_TransferToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

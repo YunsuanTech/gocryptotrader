@@ -17,19 +17,19 @@ import (
 
 // Account is an object representing the database table.
 type Account struct {
-	ID                int       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Name              string    `boil:"name" json:"name" toml:"name" yaml:"name"`
-	Address           string    `boil:"address" json:"address" toml:"address" yaml:"address"`
-	ExchangeAddressID string    `boil:"exchange_address_id" json:"exchange_address_id" toml:"exchange_address_id" yaml:"exchange_address_id"`
-	ZkAddressID       string    `boil:"zk_address_id" json:"zk_address_id" toml:"zk_address_id" yaml:"zk_address_id"`
-	F4AddressID       string    `boil:"f4_address_id" json:"f4_address_id" toml:"f4_address_id" yaml:"f4_address_id"`
-	OTAddressID       string    `boil:"ot_address_id" json:"ot_address_id" toml:"ot_address_id" yaml:"ot_address_id"`
-	Cipher            string    `boil:"cipher" json:"cipher" toml:"cipher" yaml:"cipher"`
-	Layer             int       `boil:"layer" json:"layer" toml:"layer" yaml:"layer"`
-	Owner             string    `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
-	ChainName         string    `boil:"chain_name" json:"chain_name" toml:"chain_name" yaml:"chain_name"`
-	CreatedAt         time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt         time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID                int            `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Name              string         `boil:"name" json:"name" toml:"name" yaml:"name"`
+	Address           string         `boil:"address" json:"address" toml:"address" yaml:"address"`
+	ExchangeAddressID sql.NullString `boil:"exchange_address_id" json:"exchange_address_id" toml:"exchange_address_id" yaml:"exchange_address_id"`
+	ZkAddressID       sql.NullString `boil:"zk_address_id" json:"zk_address_id" toml:"zk_address_id" yaml:"zk_address_id"`
+	F4AddressID       sql.NullString `boil:"f4_address_id" json:"f4_address_id" toml:"f4_address_id" yaml:"f4_address_id"`
+	OTAddressID       sql.NullString `boil:"ot_address_id" json:"ot_address_id" toml:"ot_address_id" yaml:"ot_address_id"`
+	Cipher            sql.NullString `boil:"cipher" json:"cipher" toml:"cipher" yaml:"cipher"`
+	Layer             int            `boil:"layer" json:"layer" toml:"layer" yaml:"layer"`
+	Owner             sql.NullString `boil:"owner" json:"owner" toml:"owner" yaml:"owner"`
+	ChainName         sql.NullString `boil:"chain_name" json:"chain_name" toml:"chain_name" yaml:"chain_name"`
+	CreatedAt         time.Time      `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt         time.Time      `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *accountR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L accountL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -153,9 +153,9 @@ func FindAccount(ctx context.Context, exec boil.ContextExecutor, iD int, selectC
 	return accountObj, nil
 }
 
-// FindAccountByName retrieves a single record by Name with an executor.
+// FindAccountByAddress retrieves a single record by Address with an executor.
 // If selectCols is empty Find will return all columns.
-func FindAccountByName(ctx context.Context, exec boil.ContextExecutor, name string, selectCols ...string) (*Account, error) {
+func FindAccountByAddress(ctx context.Context, exec boil.ContextExecutor, address string, selectCols ...string) (*Account, error) {
 	accountObj := &Account{}
 
 	sel := "*"
@@ -163,17 +163,17 @@ func FindAccountByName(ctx context.Context, exec boil.ContextExecutor, name stri
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"accounts\" where \"name\"=$1", sel,
+		"select %s from \"accounts\" where \"address\"=$1", sel,
 	)
 
-	q := queries.Raw(query, name)
+	q := queries.Raw(query, address)
 
 	err := q.Bind(ctx, exec, accountObj)
 	if err != nil {
 		if errors.Cause(err) == sql.ErrNoRows {
-			return nil, sql.ErrNoRows
+			return nil, fmt.Errorf("未找到地址为 %s 的账户", address)
 		}
-		return nil, errors.Wrap(err, "postgres: unable to select from account")
+		return nil, fmt.Errorf("查询账户失败: %v", err)
 	}
 
 	return accountObj, nil

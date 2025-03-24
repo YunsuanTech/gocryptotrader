@@ -77,6 +77,30 @@ message CryptoResponse {
   string ciphertext = 1;
 }
 
+message ForwardConfig {
+  string rpc_endpoint = 1;
+  double amount_sol = 2;
+  int32 max_instructions_per_tx = 3;
+  int32 concurrent_txs = 4;
+}
+
+message TransferSOLRequest {
+  string address = 1;
+}
+
+message TransferSOLResponse {
+  repeated string tx_signatures = 1;
+}
+
+message TransferTokenRequest {
+  string address = 1;
+  string token_mint = 2;
+}
+
+message TransferTokenResponse {
+  repeated string tx_signatures = 1;
+}
+
 service GoCryptoTraderService {
   rpc GetInfo(GetInfoRequest) returns (GetInfoResponse) {
     option (google.api.http) = {get: "/v1/getinfo"};
@@ -96,5 +120,13 @@ service GoCryptoTraderService {
 
   rpc Crypto(CryptoRequest) returns (CryptoResponse) {
     option (google.api.http) = {post: "/v1/crypto"};
+  }
+
+  rpc TransferSOL(TransferSOLRequest) returns (TransferSOLResponse) {
+    option (google.api.http) = {post: "/v1/transfer_sol"};
+  }
+
+  rpc TransferToken(TransferTokenRequest) returns (TransferTokenResponse) {
+    option (google.api.http) = {post: "/v1/transfer_token"};
   }
 }

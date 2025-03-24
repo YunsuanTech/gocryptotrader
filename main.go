@@ -12,7 +12,6 @@ import (
 	"gocryptotrader/config"
 	"gocryptotrader/core"
 	"gocryptotrader/engine"
-	"gocryptotrader/exchanges/alert"
 	"gocryptotrader/exchanges/request"
 	gctlog "gocryptotrader/log"
 	"gocryptotrader/portfolio/withdraw"
@@ -87,7 +86,6 @@ func main() {
 	flag.StringVar(&settings.HTTPUserAgent, "httpuseragent", "", "sets the HTTP user agent")
 	flag.StringVar(&settings.HTTPProxy, "httpproxy", "", "sets the HTTP proxy server")
 	flag.BoolVar(&settings.EnableExchangeHTTPDebugging, "exchangehttpdebugging", false, "sets the exchanges HTTP debugging")
-	flag.IntVar(&settings.AlertSystemPreAllocationCommsBuffer, "alertbuffer", alert.PreAllocCommsDefaultBuffer, "sets the size of the pre-allocation communications buffer")
 	flag.DurationVar(&settings.ExchangeShutdownTimeout, "exchangeshutdowntimeout", time.Second*10, "sets the maximum amount of time the program will wait for an exchange to shut down gracefully")
 	flag.StringVar(&settings.Exchanges, "exchanges", "", "sets a comma-separated list of exchanges to load. If left empty, all enabled exchanges will be loaded from the config file")
 

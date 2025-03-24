@@ -39,6 +39,82 @@ var cryptoCommand = &cli.Command{
 	},
 }
 
+var transferSOLCommand = &cli.Command{
+	Name:   "transfersol",
+	Usage:  "transfer SOL tokens to multiple addresses",
+	Action: transferSOL,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "address",
+			Usage: "the source address to transfer SOL from",
+		},
+	},
+}
+
+var transferTokenCommand = &cli.Command{
+	Name:   "transfertoken",
+	Usage:  "transfer tokens to multiple addresses",
+	Action: transferToken,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "address",
+			Usage: "the source address to transfer tokens from",
+		},
+		&cli.StringFlag{
+			Name:  "token_mint",
+			Usage: "the token mint address",
+		},
+	},
+}
+
+func transferToken(c *cli.Context) error {
+	conn, cancel, err := setupClient(c)
+	if err != nil {
+		return err
+	}
+	defer closeConn(conn, cancel)
+
+	address := c.String("address")
+	tokenMint := c.String("token_mint")
+	client := gctrpc.NewGoCryptoTraderServiceClient(conn)
+	result, err := client.TransferToken(c.Context,
+		&gctrpc.TransferTokenRequest{
+			Address:   address,
+			TokenMint: tokenMint,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	jsonOutput(result)
+	return nil
+}
+
+func transferSOL(c *cli.Context) error {
+	conn, cancel, err := setupClient(c)
+	if err != nil {
+		return err
+	}
+	defer closeConn(conn, cancel)
+
+	address := c.String("address")
+	client := gctrpc.NewGoCryptoTraderServiceClient(conn)
+	result, err := client.TransferSOL(c.Context,
+		&gctrpc.TransferSOLRequest{
+			Address: address,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	jsonOutput(result)
+	return nil
+}
+
 func getAccounts(c *cli.Context) error {
 	conn, cancel, err := setupClient(c)
 	if err != nil {

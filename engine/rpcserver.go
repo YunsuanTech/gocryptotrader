@@ -3,7 +3,9 @@ package engine
 import (
 	context "context"
 	errors "errors"
+	"fmt"
 	"gocryptotrader/common/crypto"
+	"gocryptotrader/exchanges/forward"
 	"gocryptotrader/exchanges/request"
 	"gocryptotrader/exchanges/token"
 	"gocryptotrader/log"
@@ -259,5 +261,102 @@ func (s *RPCServer) Crypto(ctx context.Context, req *gctrpc.CryptoRequest) (*gct
 
 	return &gctrpc.CryptoResponse{
 		Ciphertext: ciphertext,
+	}, nil
+}
+
+// TransferSOL 实现SOL代币批量转发服务
+func (s *RPCServer) TransferSOL(ctx context.Context, req *gctrpc.TransferSOLRequest) (*gctrpc.TransferSOLResponse, error) {
+	if req == nil {
+		return nil, errNilRequestData
+	}
+
+	if req.Address == "" {
+		return nil, errors.New("address cannot be empty")
+	}
+
+	// 获取账户管理器
+	accountManager := account.New(s.Config)
+
+	// 获取私钥
+	privateKey, err := accountManager.PrivateKey(req.Address)
+	if err != nil {
+		return nil, fmt.Errorf("获取私钥失败: %w", err)
+	}
+
+	// 获取转发管理器
+	forwardManager := forward.New(s.Config)
+
+	// 从文件读取目标地址列表
+	addresses, err := forward.ReadAddressesFromFile(s.Config.FilePath)
+	if err != nil {
+		return nil, fmt.Errorf("读取地址列表失败: %w", err)
+	}
+
+	// 创建转发请求
+	forwardReq := &forward.ForwardRequest{
+		PrivateKeyStr: privateKey,
+		Addresses:     addresses,
+		Config:        forward.DefaultConfig(),
+	}
+
+	// 执行转发
+	txSignatures, err := forwardManager.TransferSOL(ctx, forwardReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gctrpc.TransferSOLResponse{
+		TxSignatures: txSignatures,
+	}, nil
+}
+
+// TransferToken 实现代币批量转发服务
+func (s *RPCServer) TransferToken(ctx context.Context, req *gctrpc.TransferTokenRequest) (*gctrpc.TransferTokenResponse, error) {
+	if req == nil {
+		return nil, errNilRequestData
+	}
+
+	if req.Address == "" {
+		return nil, errors.New("address cannot be empty")
+	}
+
+	if req.TokenMint == "" {
+		return nil, errors.New("token mint cannot be empty")
+	}
+
+	// 获取账户管理器
+	accountManager := account.New(s.Config)
+
+	// 获取私钥
+	privateKey, err := accountManager.PrivateKey(req.Address)
+	if err != nil {
+		return nil, fmt.Errorf("获取私钥失败: %w", err)
+	}
+
+	// 获取转发管理器
+	forwardManager := forward.New(s.Config)
+
+	// 从文件读取目标地址列表
+	addresses, err := forward.ReadAddressesFromFile(s.Config.FilePath)
+	if err != nil {
+		return nil, fmt.Errorf("读取地址列表失败: %w", err)
+	}
+
+	// 创建转发请求
+	forwardReq := &forward.TokenForwardRequest{
+		PrivateKeyStr: privateKey,
+		TokenMint:     req.TokenMint,
+		Addresses:     addresses,
+		Config:        forward.DefaultConfig(),
+	}
+
+	// 执行转发
+	txSignatures, err := forwardManager.TransferToken(ctx, forwardReq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gctrpc.TransferTokenResponse{
+		TxSignatures: txSignatures,
 	}, nil
 }

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"database/sql"
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
@@ -106,28 +107,56 @@ func convertStructToAccount(item interface{}) *Account {
 		accObj.Address = f.String()
 	}
 	if f := itemValue.FieldByName("ExchangeAddressID"); f.IsValid() {
-		accObj.ExchangeAddressID = f.String()
+		if nullStr, ok := f.Interface().(sql.NullString); ok {
+			if nullStr.Valid {
+				accObj.ExchangeAddressID = nullStr.String
+			}
+		}
 	}
 	if f := itemValue.FieldByName("ZkAddressID"); f.IsValid() {
-		accObj.ZkAddressID = f.String()
+		if nullStr, ok := f.Interface().(sql.NullString); ok {
+			if nullStr.Valid {
+				accObj.ZkAddressID = nullStr.String
+			}
+		}
 	}
 	if f := itemValue.FieldByName("F4AddressID"); f.IsValid() {
-		accObj.F4AddressID = f.String()
+		if nullStr, ok := f.Interface().(sql.NullString); ok {
+			if nullStr.Valid {
+				accObj.F4AddressID = nullStr.String
+			}
+		}
 	}
 	if f := itemValue.FieldByName("OTAddressID"); f.IsValid() {
-		accObj.OTAddressID = f.String()
+		if nullStr, ok := f.Interface().(sql.NullString); ok {
+			if nullStr.Valid {
+				accObj.OTAddressID = nullStr.String
+			}
+		}
 	}
 	if f := itemValue.FieldByName("Cipher"); f.IsValid() {
-		accObj.Cipher = f.String()
+		if nullStr, ok := f.Interface().(sql.NullString); ok {
+			if nullStr.Valid {
+				accObj.Cipher = nullStr.String
+			}
+		}
 	}
 	if f := itemValue.FieldByName("Layer"); f.IsValid() {
 		accObj.Layer = int(f.Int())
 	}
 	if f := itemValue.FieldByName("Owner"); f.IsValid() {
-		accObj.Owner = f.String()
+		if nullStr, ok := f.Interface().(sql.NullString); ok {
+			if nullStr.Valid {
+				accObj.Owner = nullStr.String
+			}
+		}
 	}
 	if f := itemValue.FieldByName("ChainName"); f.IsValid() {
-		accObj.ChainName = f.String()
+		if nullStr, ok := f.Interface().(sql.NullString); ok {
+			if nullStr.Valid {
+				accObj.ChainName = nullStr.String
+			}
+		}
 	}
 
 	return accObj
@@ -174,36 +203,26 @@ func mapToAccount(itemMap map[string]interface{}) *Account {
 	return accObj
 }
 
-// GetAccountByID 根据ID获取账户信息
-func (m *Manager) GetAccountByID(id int) (*Account, error) {
-	account, err := accountsql.GetAccountByID(id)
+// GetAccountByAddress 根据地址获取账户信息
+func (m *Manager) GetAccountByAddress(address string) (*Account, error) {
+	account, err := accountsql.GetAccountByAddress(address)
 	if err != nil {
-		return nil, fmt.Errorf("获取账户信息失败: %w", err)
+		return nil, fmt.Errorf("获取地址信息失败: %w", err)
 	}
 
-	// 将interface{}转换为*Account
+	// 尝试将interface{}转换为*Account
 	accountObj, ok := account.(*Account)
-	if !ok {
+	if ok {
+		return accountObj, nil
+	}
+
+	// 使用反射进行转换
+	result := convertStructToAccount(account)
+	if result == nil {
 		return nil, fmt.Errorf("无法转换账户数据类型: %T", account)
 	}
 
-	return accountObj, nil
-}
-
-// GetAccountByName 根据名称获取账户信息
-func (m *Manager) GetAccountByName(name string) (*Account, error) {
-	account, err := accountsql.GetAccountByName(name)
-	if err != nil {
-		return nil, fmt.Errorf("获取账户信息失败: %w", err)
-	}
-
-	// 将interface{}转换为*Account
-	accountObj, ok := account.(*Account)
-	if !ok {
-		return nil, fmt.Errorf("无法转换账户数据类型: %T", account)
-	}
-
-	return accountObj, nil
+	return result, nil
 }
 
 func (m *Manager) Crypto(ciphertestStr string) (string, error) {
@@ -272,4 +291,22 @@ func (m *Manager) Decrypt(ciphertextStr string) (string, error) {
 		return "", fmt.Errorf("error decrypting:", err)
 	}
 	return string(decryptedPlaintext), nil
+}
+
+func (m *Manager) PrivateKey(address string) (string, error) {
+	account, err := m.GetAccountByAddress(address)
+	if err != nil {
+		return "", fmt.Errorf("获取账户信息失败: %w", err)
+	}
+
+	if account == nil {
+		return "", fmt.Errorf("未找到地址为 %s 的账户", address)
+	}
+
+	Cipher, err := m.Decrypt(account.Cipher)
+	if err != nil {
+		return "", fmt.Errorf("解密失败: %w", err)
+	}
+
+	return m.config.SubKey + Cipher, nil
 }

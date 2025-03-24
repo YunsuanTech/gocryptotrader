@@ -141,6 +141,72 @@
           "GoCryptoTraderService"
         ]
       }
+    },
+    "/v1/transfer_sol": {
+      "post": {
+        "operationId": "GoCryptoTraderService_TransferSOL",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcTransferSOLResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
+    "/v1/transfer_token": {
+      "post": {
+        "operationId": "GoCryptoTraderService_TransferToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcTransferTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "tokenMint",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -293,6 +359,28 @@
         },
         "lastUpdate": {
           "$ref": "#/definitions/gctrpcTimestamp"
+        }
+      }
+    },
+    "gctrpcTransferSOLResponse": {
+      "type": "object",
+      "properties": {
+        "txSignatures": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "gctrpcTransferTokenResponse": {
+      "type": "object",
+      "properties": {
+        "txSignatures": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
