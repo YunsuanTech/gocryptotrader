@@ -5,16 +5,15 @@ import (
 	"time"
 )
 
-// Settings stores engine params. Please define a settings struct for automatic
-// display of instance settings. For example, if you define a struct named
-// ManagerSettings, it will be displayed as a subheading "Manager Settings"
-// and individual field names such as 'EnableManager' will be displayed
-// as "Enable Manager: true/false".
+// Settings is a struct that holds all configurable overrides loaded from command
+// line params or env vars
 type Settings struct {
 	ConfigFile            string
 	DataDir               string
 	MigrationDir          string
 	LogFile               string
+	LogLevel              string
+	LogSubSystem          string
 	GoMaxProcs            int
 	CheckParamInteraction bool
 

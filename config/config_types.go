@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"gocryptotrader/currency"
 	"gocryptotrader/database"
 	"gocryptotrader/exchanges/protocol"
 	"gocryptotrader/log"
@@ -95,6 +96,8 @@ type Config struct {
 	Database          database.Config     `json:"database"`
 	Logging           log.Config          `json:"logging"`
 	RemoteControl     RemoteControlConfig `json:"remoteControl"`
+	Currency          currency.Config     `json:"currencyConfig"`
+	Profiler          Profiler            `json:"profiler"`
 	// encryption session values
 	storedSalt            []byte
 	sessionDK             []byte

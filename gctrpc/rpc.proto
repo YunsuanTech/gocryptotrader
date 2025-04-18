@@ -101,6 +101,23 @@ message TransferTokenResponse {
   repeated string tx_signatures = 1;
 }
 
+message StartAutoTradeRequest {
+  string address = 1;
+  int64 check_interval_seconds = 2;
+}
+
+message StartAutoTradeResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message StopAutoTradeRequest {}
+
+message StopAutoTradeResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service GoCryptoTraderService {
   rpc GetInfo(GetInfoRequest) returns (GetInfoResponse) {
     option (google.api.http) = {get: "/v1/getinfo"};
@@ -128,5 +145,13 @@ service GoCryptoTraderService {
 
   rpc TransferToken(TransferTokenRequest) returns (TransferTokenResponse) {
     option (google.api.http) = {post: "/v1/transfer_token"};
+  }
+
+  rpc StartAutoTrade(StartAutoTradeRequest) returns (StartAutoTradeResponse) {
+    option (google.api.http) = {post: "/v1/start_auto_trade"};
+  }
+
+  rpc StopAutoTrade(StopAutoTradeRequest) returns (StopAutoTradeResponse) {
+    option (google.api.http) = {post: "/v1/stop_auto_trade"};
   }
 }

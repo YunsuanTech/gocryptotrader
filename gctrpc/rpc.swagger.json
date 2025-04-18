@@ -142,6 +142,65 @@
         ]
       }
     },
+    "/v1/start_auto_trade": {
+      "post": {
+        "operationId": "GoCryptoTraderService_StartAutoTrade",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcStartAutoTradeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "checkIntervalSeconds",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
+    "/v1/stop_auto_trade": {
+      "post": {
+        "operationId": "GoCryptoTraderService_StopAutoTrade",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcStopAutoTradeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
     "/v1/transfer_sol": {
       "post": {
         "operationId": "GoCryptoTraderService_TransferSOL",
@@ -326,6 +385,28 @@
           "type": "boolean"
         },
         "listenAddress": {
+          "type": "string"
+        }
+      }
+    },
+    "gctrpcStartAutoTradeResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "gctrpcStopAutoTradeResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
           "type": "string"
         }
       }

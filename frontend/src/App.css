@@ -1,0 +1,85 @@
+/* 应用主容器 */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 页面样式 */
+.home-page,
+.accounts-page,
+.token-price-page,
+.crypto-page,
+.transfer-sol-page,
+.transfer-token-page {
+  padding: 1rem 0;
+}
+
+/* 账户卡片网格 */
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.account-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.account-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.account-chain {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.account-details {
+  flex: 1;
+}
+
+.address {
+  font-family: monospace;
+  word-break: break-all;
+}
+
+/* 表单样式 */
+.crypto-form,
+.token-form,
+.transfer-form {
+  margin-bottom: 1.5rem;
+}
+
+/* 结果容器 */
+.crypto-result,
+.price-result,
+.transfer-result {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .accounts-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -8,6 +8,7 @@ import (
 
 	"gocryptotrader/config"
 	"gocryptotrader/database"
+	"gocryptotrader/exchanges/token"
 	gctlog "gocryptotrader/log"
 	"gocryptotrader/utils"
 )
@@ -15,10 +16,13 @@ import (
 // Engine contains configuration, portfolio manager, exchange & ticker data and is the
 // overarching type across this code base.
 type Engine struct {
-	Config          *config.Config
-	DatabaseManager *DatabaseConnectionManager
-	Settings        Settings
-	ServicesWG      sync.WaitGroup
+	Config           *config.Config
+	DatabaseManager  *DatabaseConnectionManager
+	Settings         Settings
+	ServicesWG       sync.WaitGroup
+	APIServer        *apiServerManager
+	autoTradeManager *token.AutoTradeManager
+	autoTradeLock    sync.Mutex
 }
 
 // Bot is a happy global engine to allow various areas of the application
@@ -134,6 +138,9 @@ func validateSettings(b *Engine, s *Settings, flagSet FlagSet) {
 	flagSet.WithBool("websocketrpc", &b.Settings.EnableWebsocketRPC, b.Config.RemoteControl.WebsocketRPC.Enabled)
 	flagSet.WithBool("deprecatedrpc", &b.Settings.EnableDeprecatedRPC, b.Config.RemoteControl.DeprecatedRPC.Enabled)
 
+	// 启用WebsocketRoutine，默认为false，可通过命令行参数启用
+	flagSet.WithBool("websocketroutine", &b.Settings.EnableWebsocketRoutine, true)
+
 	// if flagSet["maxvirtualmachines"] {
 	// 	maxMachines := uint8(b.Settings.MaxVirtualMachines)
 	// 	b.gctScriptManager.MaxVirtualMachines = &maxMachines
@@ -225,6 +232,27 @@ func (bot *Engine) Start() error {
 		go StartRPCServer(bot)
 	}
 
+	// 初始化和启动API服务器
+	if bot.Settings.EnableWebsocketRPC || bot.Settings.EnableDeprecatedRPC {
+		apiServer, err := setupAPIServerManager(&bot.Config.RemoteControl, &bot.Config.Profiler, nil)
+		if err != nil {
+			return fmt.Errorf("failed to setup API server: %w", err)
+		}
+		bot.APIServer = apiServer
+
+		if bot.Settings.EnableDeprecatedRPC {
+			if err := bot.APIServer.StartRESTServer(); err != nil {
+				gctlog.Errorf(gctlog.Global, "REST server failed to start: %v", err)
+			}
+		}
+
+		if bot.Settings.EnableWebsocketRPC {
+			if err := bot.APIServer.StartWebsocketServer(); err != nil {
+				gctlog.Errorf(gctlog.Global, "Websocket server failed to start: %v", err)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -235,13 +263,21 @@ func (bot *Engine) Stop() {
 
 	gctlog.Debugln(gctlog.Global, "Engine shutting down..")
 
-	// 在这里可以添加必要的清理代码
-	if bot.DatabaseManager.IsRunning() {
+	if bot.DatabaseManager != nil && bot.DatabaseManager.IsRunning() {
 		if err := bot.DatabaseManager.Stop(); err != nil {
 			gctlog.Errorf(gctlog.Global, "Database manager unable to stop. Error: %v", err)
 		}
 	}
-
+	if bot.APIServer.IsRESTServerRunning() {
+		if err := bot.APIServer.StopRESTServer(); err != nil {
+			gctlog.Errorf(gctlog.Global, "API Server unable to stop REST server. Error: %s", err)
+		}
+	}
+	if bot.APIServer.IsWebsocketServerRunning() {
+		if err := bot.APIServer.StopWebsocketServer(); err != nil {
+			gctlog.Errorf(gctlog.Global, "API Server unable to stop websocket server. Error: %s", err)
+		}
+	}
 	// Wait for services to gracefully shutdown
 	bot.ServicesWG.Wait()
 	gctlog.Infoln(gctlog.Global, "Exiting.")

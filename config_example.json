@@ -15,7 +15,7 @@
    "port": 0,
    "username": "",
    "password": "",
-   "database": "/Users/jie/projects/gocryptotrader/gct.db",
+   "database": "/Users/jie/yoade/gct.db",
    "sslmode": ""
   }
  },
