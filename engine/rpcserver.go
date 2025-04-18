@@ -366,79 +366,79 @@ func (s *RPCServer) TransferToken(ctx context.Context, req *gctrpc.TransferToken
 	}, nil
 }
 
-// StartAutoTrade 启动自动交易服务
-func (s *RPCServer) StartAutoTrade(ctx context.Context, req *gctrpc.StartAutoTradeRequest) (*gctrpc.StartAutoTradeResponse, error) {
-	if req == nil {
-		return nil, errNilRequestData
-	}
+// // StartAutoTrade 启动自动交易服务
+// func (s *RPCServer) StartAutoTrade(ctx context.Context, req *gctrpc.StartAutoTradeRequest) (*gctrpc.StartAutoTradeResponse, error) {
+// 	if req == nil {
+// 		return nil, errNilRequestData
+// 	}
 
-	if req.Address == "" {
-		return nil, errors.New("address cannot be empty")
-	}
+// 	if req.Address == "" {
+// 		return nil, errors.New("address cannot be empty")
+// 	}
 
-	// 获取账户管理器
-	accountManager := account.New(s.Config)
+// 	// 获取账户管理器
+// 	accountManager := account.New(s.Config)
 
-	// 获取私钥
-	privateKey, err := accountManager.PrivateKey(req.Address)
-	if err != nil {
-		return nil, fmt.Errorf("获取私钥失败: %w", err)
-	}
+// 	// 获取私钥
+// 	privateKey, err := accountManager.PrivateKey(req.Address)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("获取私钥失败: %w", err)
+// 	}
 
-	// 创建自动交易配置
-	autoConfig := token.DefaultAutoTradeConfig()
-	autoConfig.PrivateKey = privateKey
+// 	// 创建自动交易配置
+// 	autoConfig := token.DefaultAutoTradeConfig()
+// 	autoConfig.PrivateKey = privateKey
 
-	// 如果用户指定了检查间隔时间，则使用用户指定的值
-	if req.CheckIntervalSeconds > 0 {
-		autoConfig.CheckInterval = time.Duration(req.CheckIntervalSeconds) * time.Second
-	}
+// 	// 如果用户指定了检查间隔时间，则使用用户指定的值
+// 	if req.CheckIntervalSeconds > 0 {
+// 		autoConfig.CheckInterval = time.Duration(req.CheckIntervalSeconds) * time.Second
+// 	}
 
-	// 使用锁确保线程安全
-	s.Engine.autoTradeLock.Lock()
-	defer s.Engine.autoTradeLock.Unlock()
+// 	// 使用锁确保线程安全
+// 	s.Engine.autoTradeLock.Lock()
+// 	defer s.Engine.autoTradeLock.Unlock()
 
-	// 如果已经有实例在运行，先停止它
-	if s.Engine.autoTradeManager != nil {
-		s.Engine.autoTradeManager.Stop()
-	}
+// 	// 如果已经有实例在运行，先停止它
+// 	if s.Engine.autoTradeManager != nil {
+// 		s.Engine.autoTradeManager.Stop()
+// 	}
 
-	// 创建新的自动交易管理器
-	s.Engine.autoTradeManager = token.NewAutoTradeManager(s.Config, autoConfig)
+// 	// 创建新的自动交易管理器
+// 	s.Engine.autoTradeManager = token.NewAutoTradeManager(s.Config, autoConfig)
 
-	// 启动自动交易服务
-	err = s.Engine.autoTradeManager.Start()
-	if err != nil {
-		return nil, fmt.Errorf("启动自动交易服务失败: %w", err)
-	}
+// 	// 启动自动交易服务
+// 	err = s.Engine.autoTradeManager.Start()
+// 	if err != nil {
+// 		return nil, fmt.Errorf("启动自动交易服务失败: %w", err)
+// 	}
 
-	return &gctrpc.StartAutoTradeResponse{
-		Success: true,
-		Message: "自动交易服务已成功启动",
-	}, nil
-}
+// 	return &gctrpc.StartAutoTradeResponse{
+// 		Success: true,
+// 		Message: "自动交易服务已成功启动",
+// 	}, nil
+// }
 
-// StopAutoTrade 停止自动交易服务
-func (s *RPCServer) StopAutoTrade(ctx context.Context, req *gctrpc.StopAutoTradeRequest) (*gctrpc.StopAutoTradeResponse, error) {
-	// 使用锁确保线程安全
-	s.Engine.autoTradeLock.Lock()
-	defer s.Engine.autoTradeLock.Unlock()
+// // StopAutoTrade 停止自动交易服务
+// func (s *RPCServer) StopAutoTrade(ctx context.Context, req *gctrpc.StopAutoTradeRequest) (*gctrpc.StopAutoTradeResponse, error) {
+// 	// 使用锁确保线程安全
+// 	s.Engine.autoTradeLock.Lock()
+// 	defer s.Engine.autoTradeLock.Unlock()
 
-	// 检查是否有正在运行的实例
-	if s.Engine.autoTradeManager == nil {
-		return &gctrpc.StopAutoTradeResponse{
-			Success: false,
-			Message: "没有正在运行的自动交易服务",
-		}, nil
-	}
+// 	// 检查是否有正在运行的实例
+// 	if s.Engine.autoTradeManager == nil {
+// 		return &gctrpc.StopAutoTradeResponse{
+// 			Success: false,
+// 			Message: "没有正在运行的自动交易服务",
+// 		}, nil
+// 	}
 
-	// 停止自动交易服务
-	s.Engine.autoTradeManager.Stop()
-	// 清除实例引用
-	s.Engine.autoTradeManager = nil
+// 	// 停止自动交易服务
+// 	s.Engine.autoTradeManager.Stop()
+// 	// 清除实例引用
+// 	s.Engine.autoTradeManager = nil
 
-	return &gctrpc.StopAutoTradeResponse{
-		Success: true,
-		Message: "自动交易服务已成功停止",
-	}, nil
-}
+// 	return &gctrpc.StopAutoTradeResponse{
+// 		Success: true,
+// 		Message: "自动交易服务已成功停止",
+// 	}, nil
+// }

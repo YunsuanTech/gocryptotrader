@@ -7,7 +7,6 @@ import (
 
 	"gocryptotrader/config"
 	"gocryptotrader/exchanges/account"
-	"gocryptotrader/exchanges/token"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -50,8 +49,6 @@ type apiServerManager struct {
 	restRouter             *mux.Router
 	websocketRouter        *mux.Router
 	websocketHub           *websocketHub
-	watchlistManager       *token.WatchlistManager
-	tradingManager         *token.TradingManager
 
 	remoteConfig     *config.RemoteControlConfig
 	pprofConfig      *config.Profiler
@@ -71,8 +68,6 @@ type websocketClient struct {
 	maxAuthFailures  int
 	bot              iBot
 	portfolioManager iPortfolioManager
-	watchlistManager *token.WatchlistManager
-	tradingManager   *token.TradingManager
 	configPath       string
 }
 
@@ -144,19 +139,8 @@ type EnabledExchangeCurrencies struct {
 }
 
 var wsHandlers = map[string]wsCommandHandler{
-	"auth":                          {authRequired: false, handler: wsAuth},
-	"getaccounts":                   {authRequired: true, handler: wsGetAccounts},
-	"getwatchlisttokens":            {authRequired: true, handler: wsGetWatchlistTokens},
-	"addwatchlisttoken":             {authRequired: true, handler: wsAddWatchlistToken},
-	"updatewatchlisttoken":          {authRequired: true, handler: wsUpdateWatchlistToken},
-	"updatewatchlisttokenbyaddress": {authRequired: true, handler: wsUpdateWatchlistTokenByAddress},
-	"deletewatchlisttoken":          {authRequired: true, handler: wsDeleteWatchlistToken},
-	"deletewatchlisttokenbyaddress": {authRequired: true, handler: wsDeleteWatchlistTokenByAddress},
-	// 添加交易规则相关的WebSocket处理函数
-	"gettradingrules":   {authRequired: true, handler: wsGetTradingRules},
-	"addtradingrule":    {authRequired: true, handler: wsAddTradingRule},
-	"updatetradingrule": {authRequired: true, handler: wsUpdateTradingRule},
-	"deletetradingrule": {authRequired: true, handler: wsDeleteTradingRule},
+	"auth":        {authRequired: false, handler: wsAuth},
+	"getaccounts": {authRequired: true, handler: wsGetAccounts},
 }
 
 type wsCommandHandler struct {

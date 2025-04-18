@@ -8,7 +8,6 @@ import (
 
 	"gocryptotrader/config"
 	"gocryptotrader/database"
-	"gocryptotrader/exchanges/token"
 	gctlog "gocryptotrader/log"
 	"gocryptotrader/utils"
 )
@@ -16,13 +15,12 @@ import (
 // Engine contains configuration, portfolio manager, exchange & ticker data and is the
 // overarching type across this code base.
 type Engine struct {
-	Config           *config.Config
-	DatabaseManager  *DatabaseConnectionManager
-	Settings         Settings
-	ServicesWG       sync.WaitGroup
-	APIServer        *apiServerManager
-	autoTradeManager *token.AutoTradeManager
-	autoTradeLock    sync.Mutex
+	Config          *config.Config
+	DatabaseManager *DatabaseConnectionManager
+	Settings        Settings
+	ServicesWG      sync.WaitGroup
+	APIServer       *apiServerManager
+	autoTradeLock   sync.Mutex
 }
 
 // Bot is a happy global engine to allow various areas of the application
