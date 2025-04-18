@@ -1,4 +1,4 @@
 /config_example.json
-/xen-interface/node_modules
-/node_modules
-/frontend/node_modules
+/xen-interface/node_modules/
+/node_modules/
+/frontend/node_modules/
