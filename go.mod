@@ -22,8 +22,8 @@ require (
 	golang.org/x/term v0.30.0
 	golang.org/x/text v0.23.0
 	golang.org/x/time v0.11.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250204164813-702378808489
-	google.golang.org/grpc v1.70.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20250218202821-56aae31c358a
+	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.5
 )
 
@@ -62,7 +62,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mostynb/zstdpool-freelist v0.0.0-20201229113212-927304c0c3b1 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
 	github.com/supranational/blst v0.3.14 // indirect
@@ -80,7 +79,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute/metadata v0.5.2 // indirect
+	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/ethereum/go-ethereum v1.15.8
@@ -99,6 +98,6 @@ require (
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250204164813-702378808489 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
