@@ -128,6 +128,8 @@ func main() {
 		cryptoCommand,
 		transferSOLCommand,
 		transferTokenCommand,
+		buySOLTokenCommand,
+		stopSOLTokenMonitorCommand,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

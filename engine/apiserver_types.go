@@ -139,8 +139,22 @@ type EnabledExchangeCurrencies struct {
 }
 
 var wsHandlers = map[string]wsCommandHandler{
-	"auth":        {authRequired: false, handler: wsAuth},
-	"getaccounts": {authRequired: true, handler: wsGetAccounts},
+	"auth":                    {authRequired: false, handler: wsAuth},
+	"getaccounts":             {authRequired: true, handler: wsGetAccounts},
+	"gettokenmonitors":        {authRequired: true, handler: wsGetTokenMonitors},
+	"addtokenmonitor":         {authRequired: true, handler: wsAddTokenMonitor},
+	"updatetokenmonitor":      {authRequired: true, handler: wsUpdateTokenMonitor},
+	"deletetokenmonitor":      {authRequired: true, handler: wsDeleteTokenMonitor},
+	"gettradingrules":         {authRequired: true, handler: wsGetTradingRules},
+	"addtradingrule":          {authRequired: true, handler: wsAddTradingRule},
+	"updatetradingrule":       {authRequired: true, handler: wsUpdateTradingRule},
+	"deletetradingrule":       {authRequired: true, handler: wsDeleteTradingRule},
+	"gettransactionrecords":   {authRequired: true, handler: wsGetTransactionRecords},
+	"addtransactionrecord":    {authRequired: true, handler: wsAddTransactionRecord},
+	"updatetransactionrecord": {authRequired: true, handler: wsUpdateTransactionRecord},
+	"deletetransactionrecord": {authRequired: true, handler: wsDeleteTransactionRecord},
+	"getxensbychainname":      {authRequired: true, handler: wsGetXensByChainName},
+	"getxensbystatusandchain": {authRequired: true, handler: wsGetXensByStatusAndChain},
 }
 
 type wsCommandHandler struct {

@@ -17,6 +17,10 @@ import (
 	"gocryptotrader/common"
 	"gocryptotrader/common/crypto"
 	"gocryptotrader/config"
+	"gocryptotrader/database/models/sqlite3"
+	tokenmonitor "gocryptotrader/database/repository/token_monitor"
+	tradingrule "gocryptotrader/database/repository/trading_rule"
+	transactionrecord "gocryptotrader/database/repository/transaction_record"
 	"gocryptotrader/database/repository/xens"
 	"gocryptotrader/exchanges/account"
 	"gocryptotrader/log"
@@ -116,11 +120,6 @@ func (m *apiServerManager) newRouter(isREST bool) *mux.Router {
 			{"SaveAllSettings", http.MethodPost, "/config/all/save", m.restSaveAllSettings},
 			{"GetPortfolio", http.MethodGet, "/portfolio/all", m.restGetPortfolio},
 			{"GetAccounts", http.MethodGet, "/accounts/all", m.restGetAccounts},
-			// 添加Xen相关路由
-			{"GetXensByChainName", http.MethodGet, "/xens/chain/{chainName}", m.restGetXensByChainName},
-			{"GetXensByStatusAndChain", http.MethodGet, "/xens/status/{status}/chain/{chainName}", m.restGetXensByStatusAndChain},
-			{"AddXen", http.MethodPost, "/xens/add", m.restAddXen},
-			{"UpdateXen", http.MethodPut, "/xens/update", m.restUpdateXen},
 		}
 
 		if m.pprofConfig.Enabled {
@@ -525,6 +524,612 @@ func (m1 *apiServerManager) restUpdateXen(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// WebSocket处理函数
+
+// wsGetTokenMonitors 处理WebSocket的gettokenmonitors请求
+func wsGetTokenMonitors(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "gettokenmonitors",
+	}
+
+	// 解析请求参数
+	type GetTokenMonitorsRequest struct {
+		TokenAddress string `json:"tokenAddress"`
+		TokenName    string `json:"tokenName"`
+	}
+
+	var req GetTokenMonitorsRequest
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &req)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse gettokenmonitors request: %s", err)
+			}
+		}
+	}
+
+	// 构建查询选项
+	opts := tokenmonitor.TokenMonitorQueryOptions{
+		TokenAddress: req.TokenAddress,
+		TokenName:    req.TokenName,
+		IsMonitoring: -1,
+	}
+
+	// 获取TokenMonitor记录
+	tokenMonitors, err := tokenmonitor.QueryTokenMonitors(opts)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	log.Debugf(log.APIServerMgr, "websocket: sending token monitors data")
+	wsResp.Data = tokenMonitors
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsAddTokenMonitor 处理WebSocket的addtokenmonitor请求
+func wsAddTokenMonitor(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "addtokenmonitor",
+	}
+
+	// 解析请求参数
+	var tokenMonitor sqlite3.TokenMonitor
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &tokenMonitor)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse addtokenmonitor request: %s", err)
+				wsResp.Error = err.Error()
+				return client.SendWebsocketMessage(wsResp)
+			}
+		}
+	}
+
+	// 验证必填字段
+	if tokenMonitor.TokenAddress == "" || tokenMonitor.TokenName == "" {
+		wsResp.Error = "代币地址和名称为必填字段"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 添加TokenMonitor记录
+	ctx := context.Background()
+	err := tokenmonitor.InsertTokenMonitor(ctx, &tokenMonitor)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	wsResp.Data = map[string]string{"status": "success", "message": "TokenMonitor记录已成功添加"}
+	log.Debugf(log.APIServerMgr, "websocket: token monitor added successfully")
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsUpdateTokenMonitor 处理WebSocket的updatetokenmonitor请求
+func wsUpdateTokenMonitor(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "updatetokenmonitor",
+	}
+
+	// 解析请求参数
+	var tokenMonitor sqlite3.TokenMonitor
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &tokenMonitor)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse updatetokenmonitor request: %s", err)
+				wsResp.Error = err.Error()
+				return client.SendWebsocketMessage(wsResp)
+			}
+		}
+	}
+
+	// 验证必填字段
+	if tokenMonitor.TokenAddress == "" {
+		wsResp.Error = "代币地址为必填字段"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 更新TokenMonitor记录
+	ctx := context.Background()
+	err := tokenmonitor.UpdateTokenMonitor(ctx, &tokenMonitor)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	wsResp.Data = map[string]string{"status": "success", "message": "TokenMonitor记录已成功更新"}
+	log.Debugf(log.APIServerMgr, "websocket: token monitor updated successfully")
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsDeleteTokenMonitor 处理WebSocket的deletetokenmonitor请求
+func wsDeleteTokenMonitor(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "deletetokenmonitor",
+	}
+
+	// 解析请求参数
+	type DeleteTokenMonitorRequest struct {
+		TokenAddress string `json:"tokenAddress"`
+	}
+
+	var req DeleteTokenMonitorRequest
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &req)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse deletetokenmonitor request: %s", err)
+				wsResp.Error = err.Error()
+				return client.SendWebsocketMessage(wsResp)
+			}
+		}
+	}
+
+	// 验证必填字段
+	if req.TokenAddress == "" {
+		wsResp.Error = "代币地址为必填字段"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 先查询记录是否存在
+	opts := tokenmonitor.TokenMonitorQueryOptions{
+		TokenAddress: req.TokenAddress,
+		IsMonitoring: -1,
+	}
+
+	tokenMonitors, err := tokenmonitor.QueryTokenMonitors(opts)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	tokenMonitorSlice, ok := tokenMonitors.(sqlite3.TokenMonitorSlice)
+	if !ok || len(tokenMonitorSlice) == 0 {
+		wsResp.Error = "未找到指定的TokenMonitor记录"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 删除TokenMonitor记录
+	ctx := context.Background()
+	err = tokenmonitor.DeleteTokenMonitor(ctx, tokenMonitorSlice[0])
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	wsResp.Data = map[string]string{"status": "success", "message": "TokenMonitor记录已成功删除"}
+	log.Debugf(log.APIServerMgr, "websocket: token monitor deleted successfully")
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsGetTradingRules 处理WebSocket的gettradingrules请求
+func wsGetTradingRules(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "gettradingrules",
+	}
+
+	// 解析请求参数
+	type GetTradingRulesRequest struct {
+		ID       int    `json:"id"`
+		RuleName string `json:"ruleName"`
+		RuleType string `json:"ruleType"`
+	}
+
+	var req GetTradingRulesRequest
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &req)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse gettradingrules request: %s", err)
+			}
+		}
+	}
+
+	// 构建查询选项
+	opts := tradingrule.QueryOptions{
+		ID:       req.ID,
+		RuleName: req.RuleName,
+		RuleType: req.RuleType,
+	}
+
+	// 获取TradingRule记录
+	tradingRules, err := tradingrule.QueryTradingRules(opts)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	log.Debugf(log.APIServerMgr, "websocket: sending trading rules data")
+	wsResp.Data = tradingRules
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsAddTradingRule 处理WebSocket的addtradingrule请求
+func wsAddTradingRule(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "addtradingrule",
+	}
+
+	// 解析请求参数
+	var tradingRule sqlite3.TradingRule
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &tradingRule)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse addtradingrule request: %s", err)
+				wsResp.Error = err.Error()
+				return client.SendWebsocketMessage(wsResp)
+			}
+		}
+	}
+
+	// 验证必填字段
+	if tradingRule.RuleName == "" || tradingRule.RuleType == "" {
+		wsResp.Error = "规则名称和类型为必填字段"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 添加TradingRule记录
+	ctx := context.Background()
+	err := tradingrule.InsertTradingRule(ctx, &tradingRule)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	wsResp.Data = map[string]string{
+		"status":  "success",
+		"message": "TradingRule记录已成功添加",
+		"id":      strconv.Itoa(tradingRule.ID),
+	}
+	log.Debugf(log.APIServerMgr, "websocket: trading rule added successfully")
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsUpdateTradingRule 处理WebSocket的updatetradingrule请求
+func wsUpdateTradingRule(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "updatetradingrule",
+	}
+
+	// 解析请求参数
+	var tradingRule sqlite3.TradingRule
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &tradingRule)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse updatetradingrule request: %s", err)
+				wsResp.Error = err.Error()
+				return client.SendWebsocketMessage(wsResp)
+			}
+		}
+	}
+
+	// 验证必填字段
+	if tradingRule.ID <= 0 {
+		wsResp.Error = "交易规则ID为必填字段"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 更新TradingRule记录
+	ctx := context.Background()
+	err := tradingrule.UpdateTradingRule(ctx, &tradingRule)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	wsResp.Data = map[string]string{"status": "success", "message": "TradingRule记录已成功更新"}
+	log.Debugf(log.APIServerMgr, "websocket: trading rule updated successfully")
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsDeleteTradingRule 处理WebSocket的deletetradingrule请求
+func wsDeleteTradingRule(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "deletetradingrule",
+	}
+
+	// 解析请求参数
+	type DeleteTradingRuleRequest struct {
+		ID int `json:"id"`
+	}
+
+	var req DeleteTradingRuleRequest
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &req)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse deletetradingrule request: %s", err)
+				wsResp.Error = err.Error()
+				return client.SendWebsocketMessage(wsResp)
+			}
+		}
+	}
+
+	// 验证必填字段
+	if req.ID <= 0 {
+		wsResp.Error = "无效的ID参数"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 构建查询选项
+	opts := tradingrule.QueryOptions{
+		ID: req.ID,
+	}
+
+	// 先查询记录是否存在
+	tradingRules, err := tradingrule.QueryTradingRules(opts)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	tradingRuleSlice, ok := tradingRules.(sqlite3.TradingRuleSlice)
+	if !ok || len(tradingRuleSlice) == 0 {
+		wsResp.Error = "未找到指定的TradingRule记录"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 删除TradingRule记录
+	ctx := context.Background()
+	err = tradingrule.DeleteTradingRule(ctx, tradingRuleSlice[0])
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	wsResp.Data = map[string]string{"status": "success", "message": "TradingRule记录已成功删除"}
+	log.Debugf(log.APIServerMgr, "websocket: trading rule deleted successfully")
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsGetTransactionRecords 处理WebSocket的gettransactionrecords请求
+func wsGetTransactionRecords(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "gettransactionrecords",
+	}
+
+	// 解析请求参数
+	type GetTransactionRecordsRequest struct {
+		TransactionID int    `json:"transactionId"`
+		TokenAddress  string `json:"tokenAddress"`
+		RuleID        int    `json:"ruleId"`
+		Type          string `json:"type"`
+		Status        string `json:"status"`
+	}
+
+	var req GetTransactionRecordsRequest
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &req)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse gettransactionrecords request: %s", err)
+			}
+		}
+	}
+
+	// 构建查询选项
+	opts := transactionrecord.TransactionRecordQueryOptions{
+		TransactionID: req.TransactionID,
+		TokenAddress:  req.TokenAddress,
+		RuleID:        req.RuleID,
+		Type:          req.Type,
+		Status:        req.Status,
+	}
+
+	// 获取TransactionRecord记录
+	transactionRecords, err := transactionrecord.QueryTransactionRecords(opts)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	log.Debugf(log.APIServerMgr, "websocket: sending transaction records data")
+	wsResp.Data = transactionRecords
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsAddTransactionRecord 处理WebSocket的addtransactionrecord请求
+func wsAddTransactionRecord(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "addtransactionrecord",
+	}
+
+	// 解析请求参数
+	var transactionRecord sqlite3.TransactionRecord
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &transactionRecord)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse addtransactionrecord request: %s", err)
+				wsResp.Error = err.Error()
+				return client.SendWebsocketMessage(wsResp)
+			}
+		}
+	}
+
+	// 验证必填字段
+	if transactionRecord.TokenAddress == "" || transactionRecord.Type == "" || transactionRecord.Status == "" {
+		wsResp.Error = "代币地址、交易类型和状态为必填字段"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 添加TransactionRecord记录
+	ctx := context.Background()
+	err := transactionrecord.InsertTransactionRecord(ctx, &transactionRecord)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	wsResp.Data = map[string]string{
+		"status":  "success",
+		"message": "TransactionRecord记录已成功添加",
+		"id":      strconv.Itoa(transactionRecord.TransactionID),
+	}
+	log.Debugf(log.APIServerMgr, "websocket: transaction record added successfully")
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsUpdateTransactionRecord 处理WebSocket的updatetransactionrecord请求
+func wsUpdateTransactionRecord(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "updatetransactionrecord",
+	}
+
+	// 解析请求参数
+	var transactionRecord sqlite3.TransactionRecord
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &transactionRecord)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse updatetransactionrecord request: %s", err)
+				wsResp.Error = err.Error()
+				return client.SendWebsocketMessage(wsResp)
+			}
+		}
+	}
+
+	// 验证必填字段
+	if transactionRecord.TransactionID == 0 {
+		wsResp.Error = "交易ID为必填字段"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 更新TransactionRecord记录
+	ctx := context.Background()
+	err := transactionrecord.UpdateTransactionRecord(ctx, &transactionRecord)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	wsResp.Data = map[string]string{"status": "success", "message": "TransactionRecord记录已成功更新"}
+	log.Debugf(log.APIServerMgr, "websocket: transaction record updated successfully")
+	return client.SendWebsocketMessage(wsResp)
+}
+
+// wsDeleteTransactionRecord 处理WebSocket的deletetransactionrecord请求
+func wsDeleteTransactionRecord(client *websocketClient, data interface{}) error {
+	if client == nil {
+		return errors.New("client is nil")
+	}
+
+	wsResp := WebsocketEventResponse{
+		Event: "deletetransactionrecord",
+	}
+
+	// 解析请求参数
+	type DeleteTransactionRecordRequest struct {
+		ID int `json:"id"`
+	}
+
+	var req DeleteTransactionRecordRequest
+	if data != nil {
+		d, ok := data.([]byte)
+		if ok {
+			err := json.Unmarshal(d, &req)
+			if err != nil {
+				log.Debugf(log.APIServerMgr, "websocket: failed to parse deletetransactionrecord request: %s", err)
+				wsResp.Error = err.Error()
+				return client.SendWebsocketMessage(wsResp)
+			}
+		}
+	}
+
+	// 验证必填字段
+	if req.ID <= 0 {
+		wsResp.Error = "无效的ID参数"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 先查询记录是否存在
+	opts := transactionrecord.TransactionRecordQueryOptions{
+		TransactionID: req.ID,
+	}
+
+	transactionRecords, err := transactionrecord.QueryTransactionRecords(opts)
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	transactionRecordSlice, ok := transactionRecords.(sqlite3.TransactionRecordSlice)
+	if !ok || len(transactionRecordSlice) == 0 {
+		wsResp.Error = "未找到指定的TransactionRecord记录"
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	// 删除TransactionRecord记录
+	ctx := context.Background()
+	err = transactionrecord.DeleteTransactionRecord(ctx, transactionRecordSlice[0])
+	if err != nil {
+		wsResp.Error = err.Error()
+		return client.SendWebsocketMessage(wsResp)
+	}
+
+	wsResp.Data = map[string]string{"status": "success", "message": "TransactionRecord记录已成功删除"}
+	log.Debugf(log.APIServerMgr, "websocket: transaction record deleted successfully")
+	return client.SendWebsocketMessage(wsResp)
+}
+
 // wsGetAccounts 处理WebSocket的getaccounts请求
 func wsGetAccounts(client *websocketClient, _ interface{}) error {
 	if client == nil {
@@ -856,11 +1461,11 @@ func BroadcastWebsocketMessage(evt WebsocketEvent) error {
 	return nil
 }
 
-// WebsocketClientHandler upgrades the HTTP connection to a websocket
-// compatible one
+// WebsocketClientHandler handles websocket client requests
 func (m *apiServerManager) WebsocketClientHandler(w http.ResponseWriter, r *http.Request) {
 	if !wsHubStarted {
 		StartWebsocketHandler()
+
 	}
 
 	connectionLimit := m.remoteConfig.WebsocketRPC.ConnectionLimit

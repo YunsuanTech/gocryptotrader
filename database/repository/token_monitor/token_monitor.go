@@ -14,6 +14,7 @@ import (
 type TokenMonitorQueryOptions struct {
 	TokenAddress string // 根据 token_address 查询
 	TokenName    string // 根据 token_name 查询
+	IsMonitoring int    // 根据 is_monitoring 查询
 	Limit        int    // 返回记录的最大数量
 }
 
@@ -31,6 +32,11 @@ func QueryTokenMonitors(opts TokenMonitorQueryOptions) (interface{}, error) {
 	// 添加 TokenName 条件
 	if opts.TokenName != "" {
 		mods = append(mods, qm.Where("token_name = ?", opts.TokenName))
+	}
+
+	// 添加 IsMonitoring 条件
+	if opts.IsMonitoring != -1 {
+		mods = append(mods, qm.Where("is_monitoring = ?", opts.IsMonitoring))
 	}
 
 	// 默认按 token_address 排序

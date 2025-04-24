@@ -1,0 +1,64 @@
+.trading-rule-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trading-rule-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trading-rule-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.trading-rule-form textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.trading-rule-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.trading-rule-form label {
+  font-weight: 500;
+}
+
+.trading-rule-form input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.trading-rule-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.confirm-dialog p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.confirm-dialog .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

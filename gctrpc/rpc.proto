@@ -118,6 +118,13 @@ message StopAutoTradeResponse {
   string message = 2;
 }
 
+message BuySOLTokenRequest {}
+
+message BuySOLTokenResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service GoCryptoTraderService {
   rpc GetInfo(GetInfoRequest) returns (GetInfoResponse) {
     option (google.api.http) = {get: "/v1/getinfo"};
@@ -153,5 +160,13 @@ service GoCryptoTraderService {
 
   rpc StopAutoTrade(StopAutoTradeRequest) returns (StopAutoTradeResponse) {
     option (google.api.http) = {post: "/v1/stop_auto_trade"};
+  }
+
+  rpc BuySOLToken(BuySOLTokenRequest) returns (BuySOLTokenResponse) {
+    option (google.api.http) = {post: "/v1/buy_sol_token"};
+  }
+
+  rpc StopSOLTokenMonitor(StopAutoTradeRequest) returns (StopAutoTradeResponse) {
+    option (google.api.http) = {post: "/v1/stop_sol_token_monitor"};
   }
 }

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import websocketResponseHandlerService from '../services/websocketResponseHandlerService';
+import apiService from '../services/apiService';
 import { Account } from '../types/account';
 import authService from '../services/authService';
 import Modal from '../components/Modal';
 import '../components/Modal.css';
+import './AccountsPage.css';
 
 const AccountsPage: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -13,17 +15,16 @@ const AccountsPage: React.FC = () => {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const authSent = useRef(false);
- 
+
   useEffect(() => {
     console.log('AccountsPage组件挂载');
-    
-    // 检查认证状态
+
     if (!authService.isAuthenticated) {
       console.log('用户未认证，重定向到登录页面');
       window.location.href = '/login';
       return;
     }
-    
+
     const subscription = websocketResponseHandlerService.shared.subscribe({
       next: (message) => {
         if (message.event === 'getaccounts') {
@@ -61,12 +62,10 @@ const AccountsPage: React.FC = () => {
       }
     });
 
-    // 初始化连接状态
     setIsConnected(websocketResponseHandlerService.isConnected);
-    
-    // 如果已连接且已认证，则请求账户数据
+
     if (websocketResponseHandlerService.isConnected && authService.isAuthenticated && loading) {
-      websocketResponseHandlerService.getAccounts();
+      apiService.getAccounts();
     }
 
     return () => {
@@ -79,7 +78,7 @@ const AccountsPage: React.FC = () => {
   const handleRefresh = () => {
     setLoading(true);
     if (websocketResponseHandlerService.isConnected) {
-      websocketResponseHandlerService.getAccounts();
+      apiService.getAccounts();
     } else {
       setError('WebSocket未连接');
       setLoading(false);
@@ -112,7 +111,7 @@ const AccountsPage: React.FC = () => {
         <h1>账户信息</h1>
         <div className="page-actions">
           <button 
-            className="refresh-button" 
+            className="btn btn-primary" 
             onClick={handleRefresh} 
             disabled={loading || !isConnected}
           >
@@ -124,10 +123,10 @@ const AccountsPage: React.FC = () => {
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="status-message error">{error}</div>}
 
       {loading ? (
-        <div className="loading-indicator">
+        <div className="status-message loading">
           <div className="spinner"></div>
           <span>加载账户信息中...</span>
         </div>
@@ -140,10 +139,10 @@ const AccountsPage: React.FC = () => {
                 <th>资产类型</th>
                 <th>账户名称</th>
                 <th>货币</th>
-                <th>总价值</th>
-                <th>可用</th>
-                <th>冻结</th>
-                <th>保留</th>
+                <th className="numeric-header">总价值</th>
+                <th className="numeric-header">可用</th>
+                <th className="numeric-header">冻结</th>
+                <th className="numeric-header">保留</th>
                 <th>最后更新</th>
                 <th>操作</th>
               </tr>
@@ -162,7 +161,7 @@ const AccountsPage: React.FC = () => {
                   <td>{formatDateTime(account.lastUpdated)}</td>
                   <td>
                     <button 
-                      className="view-details-btn"
+                      className="btn btn-icon" 
                       onClick={() => {
                         setSelectedAccount(account);
                         setIsModalOpen(true);
@@ -177,10 +176,9 @@ const AccountsPage: React.FC = () => {
           </table>
         </div>
       ) : (
-        <div className="no-data-message">没有找到账户信息</div>
+        <div className="status-message empty">没有找到账户信息</div>
       )}
       
-      {/* 账户详情模态框 */}
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
@@ -189,40 +187,40 @@ const AccountsPage: React.FC = () => {
         {selectedAccount && (
           <div className="account-details">
             <div className="detail-row">
-              <div className="detail-label">交易所:</div>
-              <div className="detail-value">{selectedAccount.exchange}</div>
+              <span className="detail-label">交易所:</span>
+              <span className="detail-value">{selectedAccount.exchange}</span>
             </div>
             <div className="detail-row">
-              <div className="detail-label">资产类型:</div>
-              <div className="detail-value">{selectedAccount.assetType}</div>
+              <span className="detail-label">资产类型:</span>
+              <span className="detail-value">{selectedAccount.assetType}</span>
             </div>
             <div className="detail-row">
-              <div className="detail-label">账户名称:</div>
-              <div className="detail-value">{selectedAccount.name}</div>
+              <span className="detail-label">账户名称:</span>
+              <span className="detail-value">{selectedAccount.name}</span>
             </div>
             <div className="detail-row">
-              <div className="detail-label">货币:</div>
-              <div className="detail-value">{selectedAccount.currencyName}</div>
+              <span className="detail-label">货币:</span>
+              <span className="detail-value">{selectedAccount.currencyName}</span>
             </div>
             <div className="detail-row">
-              <div className="detail-label">总价值:</div>
-              <div className="detail-value highlight">{formatNumber(selectedAccount.totalValue)}</div>
+              <span className="detail-label">总价值:</span>
+              <span className="detail-value highlight">{formatNumber(selectedAccount.totalValue)}</span>
             </div>
             <div className="detail-row">
-              <div className="detail-label">可用:</div>
-              <div className="detail-value">{formatNumber(selectedAccount.free)}</div>
+              <span className="detail-label">可用:</span>
+              <span className="detail-value">{formatNumber(selectedAccount.free)}</span>
             </div>
             <div className="detail-row">
-              <div className="detail-label">冻结:</div>
-              <div className="detail-value">{formatNumber(selectedAccount.frozen)}</div>
+              <span className="detail-label">冻结:</span>
+              <span className="detail-value">{formatNumber(selectedAccount.frozen)}</span>
             </div>
             <div className="detail-row">
-              <div className="detail-label">保留:</div>
-              <div className="detail-value">{formatNumber(selectedAccount.hold)}</div>
+              <span className="detail-label">保留:</span>
+              <span className="detail-value">{formatNumber(selectedAccount.hold)}</span>
             </div>
             <div className="detail-row">
-              <div className="detail-label">最后更新:</div>
-              <div className="detail-value">{formatDateTime(selectedAccount.lastUpdated)}</div>
+              <span className="detail-label">最后更新:</span>
+              <span className="detail-value">{formatDateTime(selectedAccount.lastUpdated)}</span>
             </div>
           </div>
         )}
@@ -232,3 +230,4 @@ const AccountsPage: React.FC = () => {
 };
 
 export default AccountsPage;
+

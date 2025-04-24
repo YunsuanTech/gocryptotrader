@@ -1,0 +1,89 @@
+.token-monitor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.token-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.token-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.token-form label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.token-form input,
+.token-form select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.token-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.btn.edit {
+  background-color: #f0ad4e;
+}
+
+.btn.delete {
+  background-color: #d9534f;
+}
+
+.delete-confirmation {
+  text-align: center;
+}
+
+.token-info {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 4px;
+  margin: 15px 0;
+}
+
+.token-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.detail-label {
+  font-weight: bold;
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  flex-grow: 1;
+}
+
+.detail-value.highlight {
+  color: #28a745;
+  font-weight: bold;
+}
+

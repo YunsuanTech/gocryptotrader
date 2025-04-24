@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import websocketResponseHandlerService from '../services/websocketResponseHandlerService';
 import authService from '../services/authService';
-import './pages.css';
+import '../styles/pages.css';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState<string>('');
@@ -87,8 +87,7 @@ const LoginPage: React.FC = () => {
       <div className="login-container">
         <div className="login-form-container">
           <h1 className="login-title">GoCryptoTrader</h1>
-          <h2 className="login-subtitle">登录</h2>
-          
+          <br/>
           {error && <div className="error-message">{error}</div>}
           
           <form className="login-form" onSubmit={handleSubmit}>

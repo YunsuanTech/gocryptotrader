@@ -19,15 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	GoCryptoTraderService_GetInfo_FullMethodName         = "/gctrpc.GoCryptoTraderService/GetInfo"
-	GoCryptoTraderService_GetRPCEndpoints_FullMethodName = "/gctrpc.GoCryptoTraderService/GetRPCEndpoints"
-	GoCryptoTraderService_GetAccounts_FullMethodName     = "/gctrpc.GoCryptoTraderService/GetAccounts"
-	GoCryptoTraderService_GetTokenPrice_FullMethodName   = "/gctrpc.GoCryptoTraderService/GetTokenPrice"
-	GoCryptoTraderService_Crypto_FullMethodName          = "/gctrpc.GoCryptoTraderService/Crypto"
-	GoCryptoTraderService_TransferSOL_FullMethodName     = "/gctrpc.GoCryptoTraderService/TransferSOL"
-	GoCryptoTraderService_TransferToken_FullMethodName   = "/gctrpc.GoCryptoTraderService/TransferToken"
-	GoCryptoTraderService_StartAutoTrade_FullMethodName  = "/gctrpc.GoCryptoTraderService/StartAutoTrade"
-	GoCryptoTraderService_StopAutoTrade_FullMethodName   = "/gctrpc.GoCryptoTraderService/StopAutoTrade"
+	GoCryptoTraderService_GetInfo_FullMethodName             = "/gctrpc.GoCryptoTraderService/GetInfo"
+	GoCryptoTraderService_GetRPCEndpoints_FullMethodName     = "/gctrpc.GoCryptoTraderService/GetRPCEndpoints"
+	GoCryptoTraderService_GetAccounts_FullMethodName         = "/gctrpc.GoCryptoTraderService/GetAccounts"
+	GoCryptoTraderService_GetTokenPrice_FullMethodName       = "/gctrpc.GoCryptoTraderService/GetTokenPrice"
+	GoCryptoTraderService_Crypto_FullMethodName              = "/gctrpc.GoCryptoTraderService/Crypto"
+	GoCryptoTraderService_TransferSOL_FullMethodName         = "/gctrpc.GoCryptoTraderService/TransferSOL"
+	GoCryptoTraderService_TransferToken_FullMethodName       = "/gctrpc.GoCryptoTraderService/TransferToken"
+	GoCryptoTraderService_StartAutoTrade_FullMethodName      = "/gctrpc.GoCryptoTraderService/StartAutoTrade"
+	GoCryptoTraderService_StopAutoTrade_FullMethodName       = "/gctrpc.GoCryptoTraderService/StopAutoTrade"
+	GoCryptoTraderService_BuySOLToken_FullMethodName         = "/gctrpc.GoCryptoTraderService/BuySOLToken"
+	GoCryptoTraderService_StopSOLTokenMonitor_FullMethodName = "/gctrpc.GoCryptoTraderService/StopSOLTokenMonitor"
 )
 
 // GoCryptoTraderServiceClient is the client API for GoCryptoTraderService service.
@@ -43,6 +45,8 @@ type GoCryptoTraderServiceClient interface {
 	TransferToken(ctx context.Context, in *TransferTokenRequest, opts ...grpc.CallOption) (*TransferTokenResponse, error)
 	StartAutoTrade(ctx context.Context, in *StartAutoTradeRequest, opts ...grpc.CallOption) (*StartAutoTradeResponse, error)
 	StopAutoTrade(ctx context.Context, in *StopAutoTradeRequest, opts ...grpc.CallOption) (*StopAutoTradeResponse, error)
+	BuySOLToken(ctx context.Context, in *BuySOLTokenRequest, opts ...grpc.CallOption) (*BuySOLTokenResponse, error)
+	StopSOLTokenMonitor(ctx context.Context, in *StopAutoTradeRequest, opts ...grpc.CallOption) (*StopAutoTradeResponse, error)
 }
 
 type goCryptoTraderServiceClient struct {
@@ -143,6 +147,26 @@ func (c *goCryptoTraderServiceClient) StopAutoTrade(ctx context.Context, in *Sto
 	return out, nil
 }
 
+func (c *goCryptoTraderServiceClient) BuySOLToken(ctx context.Context, in *BuySOLTokenRequest, opts ...grpc.CallOption) (*BuySOLTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BuySOLTokenResponse)
+	err := c.cc.Invoke(ctx, GoCryptoTraderService_BuySOLToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goCryptoTraderServiceClient) StopSOLTokenMonitor(ctx context.Context, in *StopAutoTradeRequest, opts ...grpc.CallOption) (*StopAutoTradeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StopAutoTradeResponse)
+	err := c.cc.Invoke(ctx, GoCryptoTraderService_StopSOLTokenMonitor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GoCryptoTraderServiceServer is the server API for GoCryptoTraderService service.
 // All implementations must embed UnimplementedGoCryptoTraderServiceServer
 // for forward compatibility.
@@ -156,6 +180,8 @@ type GoCryptoTraderServiceServer interface {
 	TransferToken(context.Context, *TransferTokenRequest) (*TransferTokenResponse, error)
 	StartAutoTrade(context.Context, *StartAutoTradeRequest) (*StartAutoTradeResponse, error)
 	StopAutoTrade(context.Context, *StopAutoTradeRequest) (*StopAutoTradeResponse, error)
+	BuySOLToken(context.Context, *BuySOLTokenRequest) (*BuySOLTokenResponse, error)
+	StopSOLTokenMonitor(context.Context, *StopAutoTradeRequest) (*StopAutoTradeResponse, error)
 	mustEmbedUnimplementedGoCryptoTraderServiceServer()
 }
 
@@ -192,6 +218,12 @@ func (UnimplementedGoCryptoTraderServiceServer) StartAutoTrade(context.Context, 
 }
 func (UnimplementedGoCryptoTraderServiceServer) StopAutoTrade(context.Context, *StopAutoTradeRequest) (*StopAutoTradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopAutoTrade not implemented")
+}
+func (UnimplementedGoCryptoTraderServiceServer) BuySOLToken(context.Context, *BuySOLTokenRequest) (*BuySOLTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BuySOLToken not implemented")
+}
+func (UnimplementedGoCryptoTraderServiceServer) StopSOLTokenMonitor(context.Context, *StopAutoTradeRequest) (*StopAutoTradeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopSOLTokenMonitor not implemented")
 }
 func (UnimplementedGoCryptoTraderServiceServer) mustEmbedUnimplementedGoCryptoTraderServiceServer() {}
 func (UnimplementedGoCryptoTraderServiceServer) testEmbeddedByValue()                               {}
@@ -376,6 +408,42 @@ func _GoCryptoTraderService_StopAutoTrade_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoCryptoTraderService_BuySOLToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BuySOLTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServiceServer).BuySOLToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoCryptoTraderService_BuySOLToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServiceServer).BuySOLToken(ctx, req.(*BuySOLTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoCryptoTraderService_StopSOLTokenMonitor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopAutoTradeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServiceServer).StopSOLTokenMonitor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoCryptoTraderService_StopSOLTokenMonitor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServiceServer).StopSOLTokenMonitor(ctx, req.(*StopAutoTradeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GoCryptoTraderService_ServiceDesc is the grpc.ServiceDesc for GoCryptoTraderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -418,6 +486,14 @@ var GoCryptoTraderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StopAutoTrade",
 			Handler:    _GoCryptoTraderService_StopAutoTrade_Handler,
+		},
+		{
+			MethodName: "BuySOLToken",
+			Handler:    _GoCryptoTraderService_BuySOLToken_Handler,
+		},
+		{
+			MethodName: "StopSOLTokenMonitor",
+			Handler:    _GoCryptoTraderService_StopSOLTokenMonitor_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

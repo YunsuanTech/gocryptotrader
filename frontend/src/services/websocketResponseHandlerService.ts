@@ -21,7 +21,7 @@ export class WebsocketResponseHandlerService {
       .connect(WEBSOCKET_URL)
       .pipe(
         map((response: MessageEvent) => {
-          console.log('Received WebSocket data:', response.data); // 打印原始数据
+
           const data = response.data as string;
 
           // 按 }{ 分割多个 JSON 对象
@@ -122,58 +122,6 @@ export class WebsocketResponseHandlerService {
     }
   }
 
-  /**
-   * 获取账户信息
-   * 向服务器请求当前用户的账户信息
-   */
-  public getAccounts(): void {
-    if (!this.isConnected) {
-      console.error('WebSocket未连接，无法发送获取账户请求');
-      return;
-    }
-    console.log('发送获取账户请求');
-    try {
-      websocketService.sendMessage('getaccounts', {});
-    } catch (error) {
-      console.error('发送获取账户请求失败:', error);
-      this.messages.next({
-        event: 'error',
-        error: '发送获取账户请求失败',
-        data: undefined
-      });
-    }
-  }
-  
-  // 此方法已移至apiService，保留此方法以兼容现有代码
-  /**
-   * 获取代币监视列表
-   * @deprecated 此方法与apiService.getWatchlistTokens功能重复，建议直接使用apiService
-   * @param network 网络名称
-   * @param limit 限制数量
-   */
-  public getWatchlistTokens(network: string = '', limit: number = 0): void {
-    if (!this.isConnected) {
-      console.error('WebSocket未连接，无法获取代币监视列表');
-      this.messages.next({
-        event: 'error',
-        error: 'WebSocket未连接，无法获取代币监视列表',
-        data: undefined
-      });
-      return;
-    }
-    console.log('发送获取代币监视列表请求', { network, limit });
-    // 调用统一的API服务
-    try {
-      websocketService.sendMessage('getwatchlisttokens', { network, limit });
-    } catch (error) {
-      console.error('发送获取代币监视列表请求失败:', error);
-      this.messages.next({
-        event: 'error',
-        error: '发送获取代币监视列表请求失败',
-        data: undefined
-      });
-    }
-  }
 
   /**
    * 关闭 WebSocket 连接

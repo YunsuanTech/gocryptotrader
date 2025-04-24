@@ -1,0 +1,226 @@
+/* 基础变量（复用你的样式） */
+:root {
+    --primary-color: #4cc9f0;
+    --success-color: #48bb78;
+    --danger-color: #f56565;
+    --text-dark: #1a1a2e;
+    --text-medium: #4a5568;
+    --text-light: #718096;
+    --border-color: #e2e8f0;
+    --bg-light: #f8fafc;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* 页面容器 */
+  .page-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* 页面头部 */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .page-header h1 {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: 1.5rem;
+  }
+  
+  .page-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  /* 按钮样式 */
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background-color: #3db8df;
+  }
+  
+  .btn-icon {
+    background: none;
+    color: var(--primary-color);
+    padding: 0.25rem;
+  }
+  
+  /* 状态指示 */
+  .connection-status {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .connection-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  
+  .connection-status.connected {
+    background-color: #d1fae5;
+    color: #065f46;
+  }
+  
+  .connection-status.connected::before {
+    background-color: var(--success-color);
+  }
+  
+  .connection-status.disconnected {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+  
+  .connection-status.disconnected::before {
+    background-color: var(--danger-color);
+  }
+  
+  /* 数据表格 */
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .data-table th {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    font-weight: 600;
+  }
+  
+  .data-table tr:hover {
+    background-color: var(--bg-light);
+  }
+  
+  .numeric-header,
+  .numeric-cell {
+    text-align: right;
+  }
+  
+  /* 状态消息 */
+  .status-message {
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    margin: 1rem 0;
+  }
+  
+  .status-message.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+  
+  .status-message.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-medium);
+  }
+  
+  .status-message.empty {
+    color: var(--text-light);
+  }
+  
+  /* 加载动画 */
+  .spinner {
+    border: 2px solid var(--border-color);
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* 模态框详情 */
+  .account-details {
+    padding: 1rem;
+  }
+  
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .detail-label {
+    color: var(--text-medium);
+    font-weight: 500;
+  }
+  
+  .detail-value {
+    color: var(--text-dark);
+  }
+  
+  .detail-value.highlight {
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+  
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .page-container {
+      padding: 1rem;
+    }
+  
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+  
+    .data-table th,
+    .data-table td {
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
+  
+    .detail-row {
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+  }

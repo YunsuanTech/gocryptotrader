@@ -14,6 +14,7 @@ import (
 	http "net/http"
 	filepath "path/filepath"
 	strings "strings"
+	sync "sync"
 	time "time"
 
 	"google.golang.org/grpc/metadata"
@@ -55,6 +56,10 @@ var (
 type RPCServer struct {
 	gctrpc.UnimplementedGoCryptoTraderServiceServer
 	*Engine
+	// token监控相关字段
+	tokenMonitorTimer *time.Ticker
+	tokenMonitorDone  chan bool
+	tokenMonitoring   bool
 }
 
 func (s *RPCServer) authenticateClient(ctx context.Context) (context.Context, error) {
@@ -363,6 +368,96 @@ func (s *RPCServer) TransferToken(ctx context.Context, req *gctrpc.TransferToken
 
 	return &gctrpc.TransferTokenResponse{
 		TxSignatures: txSignatures,
+	}, nil
+}
+
+// BuySOLToken 启动SOL代币监控服务
+func (s *RPCServer) BuySOLToken(ctx context.Context, req *gctrpc.BuySOLTokenRequest) (*gctrpc.BuySOLTokenResponse, error) {
+	// 如果已经在监控中，返回提示信息
+	if s.tokenMonitoring {
+		return &gctrpc.BuySOLTokenResponse{
+			Success: false,
+			Message: "SOL代币监控服务已经在运行中",
+		}, nil
+	}
+
+	// 初始化监控通道
+	s.tokenMonitorDone = make(chan bool)
+	// 创建定时器，每秒执行一次
+	s.tokenMonitorTimer = time.NewTicker(1 * time.Second)
+
+	// 标记为监控中
+	s.tokenMonitoring = true
+
+	// 启动监控协程
+	go func() {
+		for {
+			select {
+			case <-s.tokenMonitorTimer.C:
+				// 创建token客户端
+				client := token.NewClient()
+
+				// 使用WaitGroup来等待两个操作都完成
+				var wg sync.WaitGroup
+				wg.Add(2)
+
+				// 并发执行买入操作
+				go func() {
+					defer wg.Done()
+					err := token.BuySOLToken(client)
+					if err != nil {
+						log.Errorf(log.GRPCSys, "执行SOL代币买入操作失败: %v", err)
+					}
+				}()
+
+				// 并发执行卖出操作
+				go func() {
+					defer wg.Done()
+					err := token.SellSOLToken(client)
+					if err != nil {
+						log.Errorf(log.GRPCSys, "执行SOL代币卖出操作失败: %v", err)
+					}
+				}()
+
+				// 等待两个操作都完成
+				wg.Wait()
+
+			case <-s.tokenMonitorDone:
+				// 收到停止信号，退出协程
+				return
+			}
+		}
+	}()
+
+	return &gctrpc.BuySOLTokenResponse{
+		Success: true,
+		Message: "SOL代币监控服务已成功启动",
+	}, nil
+}
+
+// StopSOLTokenMonitor 停止SOL代币监控服务
+func (s *RPCServer) StopSOLTokenMonitor(ctx context.Context, req *gctrpc.StopAutoTradeRequest) (*gctrpc.StopAutoTradeResponse, error) {
+	// 如果没有在监控中，返回提示信息
+	if !s.tokenMonitoring {
+		return &gctrpc.StopAutoTradeResponse{
+			Success: false,
+			Message: "SOL代币监控服务未启动",
+		}, nil
+	}
+
+	// 停止定时器
+	s.tokenMonitorTimer.Stop()
+	// 发送停止信号
+	s.tokenMonitorDone <- true
+	// 关闭通道
+	close(s.tokenMonitorDone)
+
+	// 标记为未监控
+	s.tokenMonitoring = false
+
+	return &gctrpc.StopAutoTradeResponse{
+		Success: true,
+		Message: "SOL代币监控服务已成功停止",
 	}, nil
 }
 

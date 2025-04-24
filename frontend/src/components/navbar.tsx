@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
-import './navbar.css';
+import '../styles/navbar.css';
 
 const Navbar: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -44,7 +44,7 @@ const Navbar: React.FC = () => {
       </div>
       {!isLoginPage && (
         <div className="navbar-menu">
-          <NavLink to="/watchlist" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/tokenmonitor" className={({ isActive }) => isActive ? 'active' : ''}>
             代币监视列表
           </NavLink>
           <NavLink to="/trading-rules" className={({ isActive }) => isActive ? 'active' : ''}>

@@ -15,6 +15,18 @@ var getAccountsCommand = &cli.Command{
 	Action: getAccounts,
 }
 
+var buySOLTokenCommand = &cli.Command{
+	Name:   "buySOLToken",
+	Usage:  "gets GoCryptoTrader BuySOLToken",
+	Action: BuySOLToken,
+}
+
+var stopSOLTokenMonitorCommand = &cli.Command{
+	Name:   "stopSOLTokenMonitor",
+	Usage:  "stops SOL token monitoring service",
+	Action: StopSOLTokenMonitor,
+}
+
 var getTokenPriceCommand = &cli.Command{
 	Name:   "gettokenprice",
 	Usage:  "gets token price information",
@@ -125,6 +137,46 @@ func getAccounts(c *cli.Context) error {
 	client := gctrpc.NewGoCryptoTraderServiceClient(conn)
 	result, err := client.GetAccounts(c.Context,
 		&gctrpc.GetAccountsRequest{},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	jsonOutput(result)
+	return nil
+}
+
+func BuySOLToken(c *cli.Context) error {
+	conn, cancel, err := setupClient(c)
+	if err != nil {
+		return err
+	}
+	defer closeConn(conn, cancel)
+
+	client := gctrpc.NewGoCryptoTraderServiceClient(conn)
+	result, err := client.BuySOLToken(c.Context,
+		&gctrpc.BuySOLTokenRequest{},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	jsonOutput(result)
+	return nil
+}
+
+func StopSOLTokenMonitor(c *cli.Context) error {
+	conn, cancel, err := setupClient(c)
+	if err != nil {
+		return err
+	}
+	defer closeConn(conn, cancel)
+
+	client := gctrpc.NewGoCryptoTraderServiceClient(conn)
+	result, err := client.StopSOLTokenMonitor(c.Context,
+		&gctrpc.StopAutoTradeRequest{},
 	)
 
 	if err != nil {

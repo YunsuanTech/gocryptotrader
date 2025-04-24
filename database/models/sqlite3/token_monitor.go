@@ -2,7 +2,6 @@ package sqlite3
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -15,17 +14,19 @@ import (
 
 // TokenMonitor 是表示 token_monitor 数据库表的结构体
 type TokenMonitor struct {
-	TokenAddress   string          `boil:"token_address" json:"token_address" toml:"token_address" yaml:"token_address"`
-	TokenName      string          `boil:"token_name" json:"token_name" toml:"token_name" yaml:"token_name"`
-	Price          sql.NullFloat64 `boil:"price" json:"price" toml:"price" yaml:"price"`
-	TokenDecimals  int             `boil:"token_decimals" json:"token_decimals" toml:"token_decimals" yaml:"token_decimals"`
-	BuyAmount      sql.NullFloat64 `boil:"buy_amount" json:"buy_amount" toml:"buy_amount" yaml:"buy_amount"`
-	BuyPrice       sql.NullFloat64 `boil:"buy_price" json:"buy_price" toml:"buy_price" yaml:"buy_price"`
-	BuyTime        sql.NullInt64   `boil:"buy_time" json:"buy_time" toml:"buy_time" yaml:"buy_time"`
-	SellPercentage sql.NullFloat64 `boil:"sell_percentage" json:"sell_percentage" toml:"sell_percentage" yaml:"sell_percentage"`
-	TotalSellPrice sql.NullFloat64 `boil:"total_sell_price" json:"total_sell_price" toml:"total_sell_price" yaml:"total_sell_price"`
-	LastSellTime   sql.NullInt64   `boil:"last_sell_time" json:"last_sell_time" toml:"last_sell_time" yaml:"last_sell_time"`
-	IsMonitoring   int             `boil:"is_monitoring" json:"is_monitoring" toml:"is_monitoring" yaml:"is_monitoring"`
+	TokenAddress   string  `boil:"token_address" json:"tokenAddress" toml:"token_address" yaml:"token_address"`
+	TokenName      string  `boil:"token_name" json:"tokenName" toml:"token_name" yaml:"token_name"`
+	Price          float64 `boil:"price" json:"price" toml:"price" yaml:"price"`
+	TokenDecimals  uint8   `boil:"token_decimals" json:"tokenDecimals" toml:"token_decimals" yaml:"token_decimals"`
+	BuyAmount      float64 `boil:"buy_amount" json:"buyAmount" toml:"buy_amount" yaml:"buy_amount"`
+	BuyPrice       float64 `boil:"buy_price" json:"buyPrice" toml:"buy_price" yaml:"buy_price"`
+	BuyTime        int64   `boil:"buy_time" json:"buyTime" toml:"buy_time" yaml:"buy_time"`
+	SellPercentage float64 `boil:"sell_percentage" json:"sellPercentage" toml:"sell_percentage" yaml:"sell_percentage"`
+	TotalSellPrice float64 `boil:"total_sell_price" json:"totalSellPrice" toml:"total_sell_price" yaml:"total_sell_price"`
+	LastSellTime   float64 `boil:"last_sell_time" json:"lastSellTime" toml:"last_sell_time" yaml:"last_sell_time"`
+	IsMonitoring   int     `boil:"is_monitoring" json:"isMonitoring" toml:"is_monitoring" yaml:"is_monitoring"`
+	Amount         float64 `boil:"amount" json:"amount" toml:"amount" yaml:"amount"`
+	Increase       float64 `boil:"increase" json:"increase" toml:"increase" yaml:"increase"`
 }
 
 // Insert 使用执行器插入单条记录
@@ -40,11 +41,13 @@ func (o *TokenMonitor) Insert(ctx context.Context, exec boil.ContextExecutor) er
 		"token_name",
 		"price",
 		"token_decimals",
+		"amount",
 		"buy_amount",
 		"buy_price",
 		"buy_time",
 		"sell_percentage",
 		"total_sell_price",
+		"increase",
 		"last_sell_time",
 		"is_monitoring",
 	}
@@ -62,11 +65,13 @@ func (o *TokenMonitor) Insert(ctx context.Context, exec boil.ContextExecutor) er
 		o.TokenName,
 		o.Price,
 		o.TokenDecimals,
+		o.Amount,
 		o.BuyAmount,
 		o.BuyPrice,
 		o.BuyTime,
 		o.SellPercentage,
 		o.TotalSellPrice,
+		o.Increase,
 		o.LastSellTime,
 		o.IsMonitoring,
 	}
@@ -86,41 +91,62 @@ func (o *TokenMonitor) Update(ctx context.Context, exec boil.ContextExecutor) er
 		return errors.New("sqlite3: no token_monitor provided for update")
 	}
 
-	// 定义要更新的字段（不包括主键 token_address）
-	columns := []string{
+	// 定义列信息
+	tokenMonitorAllColumns := []string{
+		"token_address",
 		"token_name",
 		"price",
 		"token_decimals",
+		"amount",
 		"buy_amount",
 		"buy_price",
 		"buy_time",
 		"sell_percentage",
 		"total_sell_price",
+		"increase",
 		"last_sell_time",
 		"is_monitoring",
 	}
+	tokenMonitorPrimaryKeyColumns := []string{"token_address"}
 
-	// 构建 SQL 更新查询
+	// 获取要更新的列（排除主键列）
+	wl := make([]string, 0, len(tokenMonitorAllColumns)-len(tokenMonitorPrimaryKeyColumns))
+	for _, col := range tokenMonitorAllColumns {
+		if col != "token_address" { // 排除主键
+			wl = append(wl, col)
+		}
+	}
+
+	if len(wl) == 0 {
+		return errors.New("sqlite3: unable to update token_monitor, no columns to update")
+	}
+
+	// 构建SQL查询
 	query := fmt.Sprintf(
-		"UPDATE \"token_monitor\" SET \"%s\" = %s WHERE \"token_address\" = ?",
-		strings.Join(columns, "\" = ?, \""),
-		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(columns), 1, 1),
+		"UPDATE \"token_monitor\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, wl),
+		strmangle.WhereClause("\"", "\"", len(wl)+1, tokenMonitorPrimaryKeyColumns),
 	)
 
 	// 准备更新的值
-	vals := []interface{}{
-		o.TokenName,
-		o.Price,
-		o.TokenDecimals,
-		o.BuyAmount,
-		o.BuyPrice,
-		o.BuyTime,
-		o.SellPercentage,
-		o.TotalSellPrice,
-		o.LastSellTime,
-		o.IsMonitoring,
-		o.TokenAddress, // 用于 WHERE 条件
-	}
+	vals := make([]interface{}, len(wl)+len(tokenMonitorPrimaryKeyColumns))
+
+	// 添加更新列的值
+	vals[0] = o.TokenName
+	vals[1] = o.Price
+	vals[2] = o.TokenDecimals
+	vals[3] = o.Amount
+	vals[4] = o.BuyAmount
+	vals[5] = o.BuyPrice
+	vals[6] = o.BuyTime
+	vals[7] = o.SellPercentage
+	vals[8] = o.TotalSellPrice
+	vals[9] = o.Increase
+	vals[10] = o.LastSellTime
+	vals[11] = o.IsMonitoring
+
+	// 添加主键值用于WHERE条件
+	vals[len(wl)] = o.TokenAddress
 
 	// 执行更新操作
 	_, err := exec.ExecContext(ctx, query, vals...)

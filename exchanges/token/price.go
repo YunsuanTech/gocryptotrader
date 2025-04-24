@@ -21,7 +21,7 @@ const (
 	USDCAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
 	// Default values
-	DefaultFromAddress = "5Jn2fbBaf9QQG4NsNeXEnM26Yar33atPuhjUBG8zUi1H"
+	DefaultFromAddress = "vp4ppQ97v9aAeAbBBEgnxdyxjjzWaKhorjCRHewZ7rR"
 	DefaultSlippage    = 10.0
 	DefaultFee         = 0.006
 	DefaultSolAmount   = "1000000000" // 1 SOL in lamports

@@ -9,14 +9,14 @@ type BaseAsset struct {
 	Decimals     uint8    `json:"decimals"`
 	Website      *string  `json:"website,omitempty"`
 	Dev          *string  `json:"dev,omitempty"`
-	USDPrice     *float64 `json:"usdPrice,omitempty"`
+	USDPrice     float64  `json:"usdPrice,omitempty"`
 	NativePrice  *float64 `json:"nativePrice,omitempty"`
 	PoolAmount   *float64 `json:"poolAmount,omitempty"`
 	CircSupply   *float64 `json:"circSupply,omitempty"`
 	TotalSupply  *float64 `json:"totalSupply,omitempty"`
 	FDV          *float64 `json:"fdv,omitempty"`
-	MCap         *float64 `json:"mcap,omitempty"`
-	Launchpad    *string  `json:"launchpad,omitempty"`
+	MCap         float64  `json:"mcap,omitempty"`
+	Launchpad    string   `json:"launchpad,omitempty"`
 	TokenProgram *string  `json:"tokenProgram,omitempty"`
 	DevMintCount *uint32  `json:"devMintCount,omitempty"`
 }

@@ -2,7 +2,6 @@ package sqlite3
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -15,15 +14,15 @@ import (
 
 // TransactionRecord 是表示 transaction_records 数据库表的结构体
 type TransactionRecord struct {
-	TransactionID int            `boil:"transaction_id" json:"transaction_id" toml:"transaction_id" yaml:"transaction_id"`
-	TokenAddress  string         `boil:"token_address" json:"token_address" toml:"token_address" yaml:"token_address"`
-	RuleID        sql.NullInt64  `boil:"rule_id" json:"rule_id" toml:"rule_id" yaml:"rule_id"`
-	Type          string         `boil:"type" json:"type" toml:"type" yaml:"type"`
-	Amount        float64        `boil:"amount" json:"amount" toml:"amount" yaml:"amount"`
-	Price         float64        `boil:"price" json:"price" toml:"price" yaml:"price"`
-	Timestamp     int64          `boil:"timestamp" json:"timestamp" toml:"timestamp" yaml:"timestamp"`
-	TxHash        sql.NullString `boil:"tx_hash" json:"tx_hash" toml:"tx_hash" yaml:"tx_hash"`
-	Status        string         `boil:"status" json:"status" toml:"status" yaml:"status"`
+	TransactionID int     `boil:"transaction_id" json:"transactionId" toml:"transaction_id" yaml:"transaction_id"`
+	TokenAddress  string  `boil:"token_address" json:"tokenAddress" toml:"token_address" yaml:"token_address"`
+	RuleID        int     `boil:"rule_id" json:"ruleId" toml:"rule_id" yaml:"rule_id"`
+	Type          string  `boil:"type" json:"type" toml:"type" yaml:"type"`
+	Amount        float64 `boil:"amount" json:"amount" toml:"amount" yaml:"amount"`
+	Price         float64 `boil:"price" json:"price" toml:"price" yaml:"price"`
+	Timestamp     int64   `boil:"timestamp" json:"timestamp" toml:"timestamp" yaml:"timestamp"`
+	TxHash        string  `boil:"tx_hash" json:"txHash" toml:"tx_hash" yaml:"tx_hash"`
+	Status        string  `boil:"status" json:"status" toml:"status" yaml:"status"`
 }
 
 // Insert 使用执行器插入单条记录
@@ -85,8 +84,9 @@ func (o *TransactionRecord) Update(ctx context.Context, exec boil.ContextExecuto
 		return errors.New("sqlite3: no transaction_record provided for update")
 	}
 
-	// 定义要更新的字段（不包括 transaction_id）
-	columns := []string{
+	// 定义列信息
+	transactionRecordAllColumns := []string{
+		"transaction_id",
 		"token_address",
 		"rule_id",
 		"type",
@@ -96,26 +96,42 @@ func (o *TransactionRecord) Update(ctx context.Context, exec boil.ContextExecuto
 		"tx_hash",
 		"status",
 	}
+	transactionRecordPrimaryKeyColumns := []string{"transaction_id"}
 
-	// 构建 SQL 更新查询
+	// 获取要更新的列（排除主键列）
+	wl := make([]string, 0, len(transactionRecordAllColumns)-len(transactionRecordPrimaryKeyColumns))
+	for _, col := range transactionRecordAllColumns {
+		if col != "transaction_id" { // 排除主键
+			wl = append(wl, col)
+		}
+	}
+
+	if len(wl) == 0 {
+		return errors.New("sqlite3: unable to update transaction_records, no columns to update")
+	}
+
+	// 构建SQL查询
 	query := fmt.Sprintf(
-		"UPDATE \"transaction_records\" SET \"%s\" = %s WHERE \"transaction_id\" = ?",
-		strings.Join(columns, "\" = ?, \""),
-		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(columns), 1, 1),
+		"UPDATE \"transaction_records\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, wl),
+		strmangle.WhereClause("\"", "\"", len(wl)+1, transactionRecordPrimaryKeyColumns),
 	)
 
 	// 准备更新的值
-	vals := []interface{}{
-		o.TokenAddress,
-		o.RuleID,
-		o.Type,
-		o.Amount,
-		o.Price,
-		o.Timestamp,
-		o.TxHash,
-		o.Status,
-		o.TransactionID, // 用于 WHERE 条件
-	}
+	vals := make([]interface{}, len(wl)+len(transactionRecordPrimaryKeyColumns))
+
+	// 添加更新列的值
+	vals[0] = o.TokenAddress
+	vals[1] = o.RuleID
+	vals[2] = o.Type
+	vals[3] = o.Amount
+	vals[4] = o.Price
+	vals[5] = o.Timestamp
+	vals[6] = o.TxHash
+	vals[7] = o.Status
+
+	// 添加主键值用于WHERE条件
+	vals[len(wl)] = o.TransactionID
 
 	// 执行更新操作
 	_, err := exec.ExecContext(ctx, query, vals...)

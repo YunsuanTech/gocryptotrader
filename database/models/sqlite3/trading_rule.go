@@ -2,7 +2,6 @@ package sqlite3
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -15,14 +14,14 @@ import (
 
 // TradingRule 是表示 trading_rules 数据库表的结构体
 type TradingRule struct {
-	ID          int             `boil:"id" json:"id" toml:"id" yaml:"id"`
-	RuleName    string          `boil:"rule_name" json:"rule_name" toml:"rule_name" yaml:"rule_name"`
-	RuleType    string          `boil:"rule_type" json:"rule_type" toml:"rule_type" yaml:"rule_type"`
-	BuyPrice    sql.NullFloat64 `boil:"buy_price" json:"buy_price" toml:"buy_price" yaml:"buy_price"`
-	SellPrice   sql.NullFloat64 `boil:"sell_price" json:"sell_price" toml:"sell_price" yaml:"sell_price"`
-	Condition   string          `boil:"condition" json:"condition" toml:"condition" yaml:"condition"`
-	Priority    sql.NullFloat64 `boil:"priority" json:"priority" toml:"priority" yaml:"priority"`
-	Description sql.NullString  `boil:"description" json:"description" toml:"description" yaml:"description"`
+	ID          int     `boil:"id" json:"id" toml:"id" yaml:"id"`
+	RuleName    string  `boil:"rule_name" json:"ruleName" toml:"rule_name" yaml:"rule_name"`
+	RuleType    string  `boil:"rule_type" json:"ruleType" toml:"rule_type" yaml:"rule_type"`
+	BuyPrice    float64 `boil:"buy_price" json:"buyPrice" toml:"buy_price" yaml:"buy_price"`
+	SellPrice   float64 `boil:"sell_price" json:"sellPrice" toml:"sell_price" yaml:"sell_price"`
+	Condition   string  `boil:"condition" json:"condition" toml:"condition" yaml:"condition"`
+	Priority    float64 `boil:"priority" json:"priority" toml:"priority" yaml:"priority"`
+	Description string  `boil:"description" json:"description" toml:"description" yaml:"description"`
 }
 
 // Insert 使用执行器插入单条记录
@@ -78,13 +77,13 @@ func (o *TradingRule) Insert(ctx context.Context, exec boil.ContextExecutor) err
 
 // Update 更新数据库中的 TradingRule 记录
 func (o *TradingRule) Update(ctx context.Context, exec boil.ContextExecutor) error {
-	// 检查 TradingRule 实例是否为 nil
 	if o == nil {
 		return errors.New("sqlite3: no trading_rule provided for update")
 	}
 
-	// 定义要更新的字段（不包括 id）
-	columns := []string{
+	// 定义列信息
+	tradingRuleAllColumns := []string{
+		"id",
 		"rule_name",
 		"rule_type",
 		"buy_price",
@@ -93,25 +92,41 @@ func (o *TradingRule) Update(ctx context.Context, exec boil.ContextExecutor) err
 		"priority",
 		"description",
 	}
+	tradingRulePrimaryKeyColumns := []string{"id"}
 
-	// 构建 SQL 更新查询
+	// 获取要更新的列（排除主键列）
+	wl := make([]string, 0, len(tradingRuleAllColumns)-len(tradingRulePrimaryKeyColumns))
+	for _, col := range tradingRuleAllColumns {
+		if col != "id" { // 排除主键
+			wl = append(wl, col)
+		}
+	}
+
+	if len(wl) == 0 {
+		return errors.New("sqlite3: unable to update trading_rules, no columns to update")
+	}
+
+	// 构建SQL查询
 	query := fmt.Sprintf(
-		"UPDATE \"trading_rules\" SET \"%s\" = %s WHERE \"id\" = ?",
-		strings.Join(columns, "\" = ?, \""),
-		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(columns), 1, 1),
+		"UPDATE \"trading_rules\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, wl),
+		strmangle.WhereClause("\"", "\"", len(wl)+1, tradingRulePrimaryKeyColumns),
 	)
 
 	// 准备更新的值
-	vals := []interface{}{
-		o.RuleName,
-		o.RuleType,
-		o.BuyPrice,
-		o.SellPrice,
-		o.Condition,
-		o.Priority,
-		o.Description,
-		o.ID, // 用于 WHERE 条件
-	}
+	vals := make([]interface{}, len(wl)+len(tradingRulePrimaryKeyColumns))
+
+	// 添加更新列的值
+	vals[0] = o.RuleName
+	vals[1] = o.RuleType
+	vals[2] = o.BuyPrice
+	vals[3] = o.SellPrice
+	vals[4] = o.Condition
+	vals[5] = o.Priority
+	vals[6] = o.Description
+
+	// 添加主键值用于WHERE条件
+	vals[len(wl)] = o.ID
 
 	// 执行更新操作
 	_, err := exec.ExecContext(ctx, query, vals...)

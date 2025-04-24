@@ -16,6 +16,28 @@
     "application/json"
   ],
   "paths": {
+    "/v1/buy_sol_token": {
+      "post": {
+        "operationId": "GoCryptoTraderService_BuySOLToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcBuySOLTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
     "/v1/crypto": {
       "post": {
         "operationId": "GoCryptoTraderService_Crypto",
@@ -201,6 +223,28 @@
         ]
       }
     },
+    "/v1/stop_sol_token_monitor": {
+      "post": {
+        "operationId": "GoCryptoTraderService_StopSOLTokenMonitor",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcStopAutoTradeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
     "/v1/transfer_sol": {
       "post": {
         "operationId": "GoCryptoTraderService_TransferSOL",
@@ -301,6 +345,17 @@
           "type": "string"
         },
         "chainName": {
+          "type": "string"
+        }
+      }
+    },
+    "gctrpcBuySOLTokenResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
           "type": "string"
         }
       }
