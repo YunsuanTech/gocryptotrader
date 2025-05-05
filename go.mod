@@ -62,7 +62,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mostynb/zstdpool-freelist v0.0.0-20201229113212-927304c0c3b1 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
 	github.com/supranational/blst v0.3.14 // indirect
@@ -86,7 +85,7 @@ require (
 	github.com/ethereum/go-ethereum v1.15.8
 	github.com/friendsofgo/errors v0.9.2 // indirect
 	github.com/gagliardetto/solana-go v1.12.0
-	github.com/go-telegram/bot v1.14.0
+	github.com/go-telegram/bot v1.15.0
 	github.com/gorilla/mux v1.8.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
