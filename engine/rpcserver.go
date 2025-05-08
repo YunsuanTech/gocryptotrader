@@ -24,6 +24,8 @@ import (
 	"gocryptotrader/gctrpc/auth"
 	"gocryptotrader/utils"
 
+	transactionrecord "gocryptotrader/database/repository/transaction_record"
+
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -60,6 +62,13 @@ type RPCServer struct {
 	tokenMonitorTimer *time.Ticker
 	tokenMonitorDone  chan bool
 	tokenMonitoring   bool
+
+	// 信号交易监控相关字段
+	signalMonitorTimer *time.Ticker
+	signalMonitorDone  chan bool
+	signalMonitoring   bool
+	signalRequests     map[string]*gctrpc.TradeTokenBySignalRequest // 使用map存储多个代币地址的监控请求
+	signalRequestMutex sync.RWMutex                                 // 用于保护signalRequests的互斥锁
 }
 
 func (s *RPCServer) authenticateClient(ctx context.Context) (context.Context, error) {
@@ -384,18 +393,21 @@ func (s *RPCServer) BuySOLToken(ctx context.Context, req *gctrpc.BuySOLTokenRequ
 	// 初始化监控通道
 	s.tokenMonitorDone = make(chan bool)
 	// 创建定时器，每秒执行一次
-	s.tokenMonitorTimer = time.NewTicker(1 * time.Second)
+	s.tokenMonitorTimer = time.NewTicker(10 * time.Minute)
 
 	// 标记为监控中
 	s.tokenMonitoring = true
+	fetcher, err := token.NewGMGNFetcher()
+	if err != nil {
+		log.Errorf(log.GRPCSys, "创建GMGNFetcher实例失败: %v", err)
+
+	}
 
 	// 启动监控协程
 	go func() {
 		for {
 			select {
 			case <-s.tokenMonitorTimer.C:
-				// 创建token客户端
-				client := token.NewClient()
 
 				// 使用WaitGroup来等待两个操作都完成
 				var wg sync.WaitGroup
@@ -404,7 +416,9 @@ func (s *RPCServer) BuySOLToken(ctx context.Context, req *gctrpc.BuySOLTokenRequ
 				// 并发执行买入操作
 				go func() {
 					defer wg.Done()
-					err := token.BuySOLToken(client)
+					// 创建GMGNFetcher实例
+
+					err := token.BuySOLToken(fetcher)
 					if err != nil {
 						log.Errorf(log.GRPCSys, "执行SOL代币买入操作失败: %v", err)
 					}
@@ -413,7 +427,7 @@ func (s *RPCServer) BuySOLToken(ctx context.Context, req *gctrpc.BuySOLTokenRequ
 				// 并发执行卖出操作
 				go func() {
 					defer wg.Done()
-					err := token.SellSOLToken(client)
+					err := token.SellSOLToken(fetcher)
 					if err != nil {
 						log.Errorf(log.GRPCSys, "执行SOL代币卖出操作失败: %v", err)
 					}
@@ -461,79 +475,175 @@ func (s *RPCServer) StopSOLTokenMonitor(ctx context.Context, req *gctrpc.StopAut
 	}, nil
 }
 
-// // StartAutoTrade 启动自动交易服务
-// func (s *RPCServer) StartAutoTrade(ctx context.Context, req *gctrpc.StartAutoTradeRequest) (*gctrpc.StartAutoTradeResponse, error) {
-// 	if req == nil {
-// 		return nil, errNilRequestData
-// 	}
+// GetProfitLoss 获取所有代币的盈亏情况
+func (s *RPCServer) GetProfitLoss(ctx context.Context, req *gctrpc.GetProfitLossRequest) (*gctrpc.GetProfitLossResponse, error) {
+	// 调用 transaction_record 包的 GetProfitLoss 函数获取盈亏数据
+	profitLosses, err := transactionrecord.GetProfitLoss(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-// 	if req.Address == "" {
-// 		return nil, errors.New("address cannot be empty")
-// 	}
+	// 转换为 gRPC 响应格式
+	response := &gctrpc.GetProfitLossResponse{}
+	for _, pl := range profitLosses {
+		response.TokenProfitLosses = append(response.TokenProfitLosses, &gctrpc.TokenProfitLoss{
+			TokenAddress:    pl.TokenAddress,
+			TotalBuyAmount:  pl.TotalBuyAmount,
+			TotalSellAmount: pl.TotalSellAmount,
+			ProfitLoss:      pl.ProfitLoss,
+		})
+	}
 
-// 	// 获取账户管理器
-// 	accountManager := account.New(s.Config)
+	return response, nil
+}
 
-// 	// 获取私钥
-// 	privateKey, err := accountManager.PrivateKey(req.Address)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("获取私钥失败: %w", err)
-// 	}
+// TradeTokenBySignal 根据信号交易代币
+func (s *RPCServer) TradeTokenBySignal(ctx context.Context, req *gctrpc.TradeTokenBySignalRequest) (*gctrpc.TradeTokenBySignalResponse, error) {
+	if req == nil {
+		return nil, errNilRequestData
+	}
 
-// 	// 创建自动交易配置
-// 	autoConfig := token.DefaultAutoTradeConfig()
-// 	autoConfig.PrivateKey = privateKey
+	if req.TokenAddress == "" {
+		return nil, errors.New("token address cannot be empty")
+	}
 
-// 	// 如果用户指定了检查间隔时间，则使用用户指定的值
-// 	if req.CheckIntervalSeconds > 0 {
-// 		autoConfig.CheckInterval = time.Duration(req.CheckIntervalSeconds) * time.Second
-// 	}
+	if req.BuyPrice <= 0 {
+		return nil, errors.New("buy price must be greater than zero")
+	}
 
-// 	// 使用锁确保线程安全
-// 	s.Engine.autoTradeLock.Lock()
-// 	defer s.Engine.autoTradeLock.Unlock()
+	// 检查是否已经在监控这个代币地址
+	s.signalRequestMutex.RLock()
+	if s.signalRequests != nil {
+		if _, exists := s.signalRequests[req.TokenAddress]; exists {
+			s.signalRequestMutex.RUnlock()
+			return &gctrpc.TradeTokenBySignalResponse{
+				Success: false,
+				Message: fmt.Sprintf("代币地址 %s 已经在监控中", req.TokenAddress),
+			}, nil
+		}
+	}
+	s.signalRequestMutex.RUnlock()
 
-// 	// 如果已经有实例在运行，先停止它
-// 	if s.Engine.autoTradeManager != nil {
-// 		s.Engine.autoTradeManager.Stop()
-// 	}
+	// 如果监控服务尚未启动，则初始化
+	if !s.signalMonitoring {
+		// 初始化监控通道和请求映射
+		s.signalMonitorDone = make(chan bool)
+		s.signalRequestMutex.Lock()
+		s.signalRequests = make(map[string]*gctrpc.TradeTokenBySignalRequest)
+		s.signalRequestMutex.Unlock()
+		// 创建定时器，每5分钟执行一次
+		s.signalMonitorTimer = time.NewTicker(60 * time.Minute)
 
-// 	// 创建新的自动交易管理器
-// 	s.Engine.autoTradeManager = token.NewAutoTradeManager(s.Config, autoConfig)
+		// 标记为监控中
+		s.signalMonitoring = true
 
-// 	// 启动自动交易服务
-// 	err = s.Engine.autoTradeManager.Start()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("启动自动交易服务失败: %w", err)
-// 	}
+		// 启动监控协程
+		go func() {
+			for {
+				select {
+				case <-s.signalMonitorTimer.C:
+					// 获取当前所有监控的代币请求
+					s.signalRequestMutex.RLock()
+					requests := make(map[string]*gctrpc.TradeTokenBySignalRequest, len(s.signalRequests))
+					for addr, req := range s.signalRequests {
+						requests[addr] = req
+					}
+					s.signalRequestMutex.RUnlock()
 
-// 	return &gctrpc.StartAutoTradeResponse{
-// 		Success: true,
-// 		Message: "自动交易服务已成功启动",
-// 	}, nil
-// }
+					// 遍历所有代币请求并执行交易
+					for _, req := range requests {
+						var err error
+						if req.TradeRatio > 0 {
+							// 如果提供了交易比例，则传递该参数
+							err = token.TradeTokenBySignal(req.TokenAddress, req.BuyPrice, req.TradeRatio)
+						} else {
+							// 否则使用默认比例
+							err = token.TradeTokenBySignal(req.TokenAddress, req.BuyPrice)
+						}
 
-// // StopAutoTrade 停止自动交易服务
-// func (s *RPCServer) StopAutoTrade(ctx context.Context, req *gctrpc.StopAutoTradeRequest) (*gctrpc.StopAutoTradeResponse, error) {
-// 	// 使用锁确保线程安全
-// 	s.Engine.autoTradeLock.Lock()
-// 	defer s.Engine.autoTradeLock.Unlock()
+						if err != nil {
+							log.Errorf(log.GRPCSys, "执行信号交易失败，代币地址: %s, 错误: %v", req.TokenAddress, err)
+						}
+					}
 
-// 	// 检查是否有正在运行的实例
-// 	if s.Engine.autoTradeManager == nil {
-// 		return &gctrpc.StopAutoTradeResponse{
-// 			Success: false,
-// 			Message: "没有正在运行的自动交易服务",
-// 		}, nil
-// 	}
+				case <-s.signalMonitorDone:
+					// 收到停止信号，退出协程
+					return
+				}
+			}
+		}()
+	}
 
-// 	// 停止自动交易服务
-// 	s.Engine.autoTradeManager.Stop()
-// 	// 清除实例引用
-// 	s.Engine.autoTradeManager = nil
+	// 添加新的代币监控请求
+	s.signalRequestMutex.Lock()
+	s.signalRequests[req.TokenAddress] = req
+	s.signalRequestMutex.Unlock()
 
-// 	return &gctrpc.StopAutoTradeResponse{
-// 		Success: true,
-// 		Message: "自动交易服务已成功停止",
-// 	}, nil
-// }
+	return &gctrpc.TradeTokenBySignalResponse{
+		Success: true,
+		Message: fmt.Sprintf("信号交易监控服务已成功添加代币地址: %s，将每5分钟执行一次交易检查", req.TokenAddress),
+	}, nil
+}
+
+// StopSignalMonitor 停止信号交易监控服务
+func (s *RPCServer) StopSignalMonitor(ctx context.Context, req *gctrpc.StopSignalMonitorRequest) (*gctrpc.StopSignalMonitorResponse, error) {
+	// 如果没有在监控中，返回提示信息
+	if !s.signalMonitoring {
+		return &gctrpc.StopSignalMonitorResponse{
+			Success: false,
+			Message: "信号交易监控服务未启动",
+		}, nil
+	}
+
+	// 如果请求中指定了代币地址，则只停止该代币的监控
+	if req.TokenAddress != "" {
+		s.signalRequestMutex.Lock()
+		if _, exists := s.signalRequests[req.TokenAddress]; exists {
+			delete(s.signalRequests, req.TokenAddress)
+			remaining := len(s.signalRequests)
+			s.signalRequestMutex.Unlock()
+
+			// 如果没有剩余监控的代币，则完全停止监控服务
+			if remaining == 0 {
+				// 停止定时器
+				s.signalMonitorTimer.Stop()
+				// 发送停止信号
+				s.signalMonitorDone <- true
+				// 关闭通道
+				close(s.signalMonitorDone)
+				// 标记为未监控
+				s.signalMonitoring = false
+			}
+
+			return &gctrpc.StopSignalMonitorResponse{
+				Success: true,
+				Message: fmt.Sprintf("已停止监控代币地址: %s，剩余监控代币数量: %d", req.TokenAddress, remaining),
+			}, nil
+		}
+		s.signalRequestMutex.Unlock()
+		return &gctrpc.StopSignalMonitorResponse{
+			Success: false,
+			Message: fmt.Sprintf("代币地址 %s 未在监控列表中", req.TokenAddress),
+		}, nil
+	}
+
+	// 如果未指定代币地址，则停止所有监控
+	// 停止定时器
+	s.signalMonitorTimer.Stop()
+	// 发送停止信号
+	s.signalMonitorDone <- true
+	// 关闭通道
+	close(s.signalMonitorDone)
+
+	// 清理请求数据
+	s.signalRequestMutex.Lock()
+	s.signalRequests = nil
+	s.signalRequestMutex.Unlock()
+	// 标记为未监控
+	s.signalMonitoring = false
+
+	return &gctrpc.StopSignalMonitorResponse{
+		Success: true,
+		Message: "信号交易监控服务已成功停止所有代币监控",
+	}, nil
+}

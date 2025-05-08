@@ -8,6 +8,7 @@ import (
 	modelSQLite "gocryptotrader/database/models/sqlite3"
 
 	"github.com/thrasher-corp/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/queries"
 )
 
 // TransactionRecordQueryOptions 定义查询 TransactionRecord 的选项
@@ -121,4 +122,60 @@ func DeleteTransactionRecord(ctx context.Context, tr *modelSQLite.TransactionRec
 	}
 
 	return nil
+}
+
+// TokenProfitLoss 代表一个代币的盈亏信息
+type TokenProfitLoss struct {
+	TokenAddress    string  // 代币地址
+	TotalBuyAmount  float64 // 总买入金额
+	TotalSellAmount float64 // 总卖出金额
+	ProfitLoss      float64 // 盈亏金额
+}
+
+// GetProfitLoss 计算所有代币的盈亏情况
+func GetProfitLoss(ctx context.Context) ([]TokenProfitLoss, error) {
+	// 检查数据库连接是否可用
+	if database.DB.SQL == nil {
+		return nil, database.ErrDatabaseSupportDisabled
+	}
+
+	// 使用原生SQL查询直接计算每个代币的买入和卖出总额
+	query := `
+		SELECT 
+			token_address,
+			SUM(CASE WHEN type = 'buy' THEN amount * price ELSE 0 END) as total_buy_amount,
+			SUM(CASE WHEN type = 'sell' THEN amount * price ELSE 0 END) as total_sell_amount
+		FROM 
+			transaction_records
+		WHERE 
+			status = 'confirmed'
+		GROUP BY 
+			token_address
+	`
+
+	// 执行查询
+	rows, err := queries.Raw(query).QueryContext(ctx, database.DB.SQL)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// 处理查询结果
+	var result []TokenProfitLoss
+	for rows.Next() {
+		var pl TokenProfitLoss
+		if err := rows.Scan(&pl.TokenAddress, &pl.TotalBuyAmount, &pl.TotalSellAmount); err != nil {
+			return nil, err
+		}
+		// 计算盈亏
+		pl.ProfitLoss = pl.TotalSellAmount - pl.TotalBuyAmount
+		result = append(result, pl)
+	}
+
+	// 检查是否有遍历错误
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

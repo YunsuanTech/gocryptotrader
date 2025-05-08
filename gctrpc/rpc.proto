@@ -118,6 +118,39 @@ message StopAutoTradeResponse {
   string message = 2;
 }
 
+message StopSignalMonitorRequest {
+  string token_address = 1;
+}
+
+message StopSignalMonitorResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetProfitLossRequest {}
+
+message TokenProfitLoss {
+  string token_address = 1;
+  double total_buy_amount = 2;
+  double total_sell_amount = 3;
+  double profit_loss = 4;
+}
+
+message GetProfitLossResponse {
+  repeated TokenProfitLoss token_profit_losses = 1;
+}
+
+message TradeTokenBySignalRequest {
+  string token_address = 1;
+  double buy_price = 2;
+  double trade_ratio = 3; // 可选参数，交易比例，范围0-1，默认为1（全部）
+}
+
+message TradeTokenBySignalResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 message BuySOLTokenRequest {}
 
 message BuySOLTokenResponse {
@@ -168,5 +201,17 @@ service GoCryptoTraderService {
 
   rpc StopSOLTokenMonitor(StopAutoTradeRequest) returns (StopAutoTradeResponse) {
     option (google.api.http) = {post: "/v1/stop_sol_token_monitor"};
+  }
+
+  rpc GetProfitLoss(GetProfitLossRequest) returns (GetProfitLossResponse) {
+    option (google.api.http) = {get: "/v1/get_profit_loss"};
+  }
+
+  rpc TradeTokenBySignal(TradeTokenBySignalRequest) returns (TradeTokenBySignalResponse) {
+    option (google.api.http) = {post: "/v1/trade_token_by_signal"};
+  }
+
+  rpc StopSignalMonitor(StopSignalMonitorRequest) returns (StopSignalMonitorResponse) {
+    option (google.api.http) = {post: "/v1/stop_signal_monitor"};
   }
 }

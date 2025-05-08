@@ -7,7 +7,8 @@ type BaseAsset struct {
 	Symbol       string   `json:"symbol"`
 	Icon         *string  `json:"icon,omitempty"`
 	Decimals     uint8    `json:"decimals"`
-	Website      *string  `json:"website,omitempty"`
+	Twitter      string   `json:"twitter,omitempty"`
+	Website      string   `json:"website,omitempty"`
 	Dev          *string  `json:"dev,omitempty"`
 	USDPrice     float64  `json:"usdPrice,omitempty"`
 	NativePrice  *float64 `json:"nativePrice,omitempty"`
@@ -19,6 +20,7 @@ type BaseAsset struct {
 	Launchpad    string   `json:"launchpad,omitempty"`
 	TokenProgram *string  `json:"tokenProgram,omitempty"`
 	DevMintCount *uint32  `json:"devMintCount,omitempty"`
+	HolderCount  int32    `json:"holderCount,omitempty"`
 }
 
 // QuoteAsset 对应 Rust 的 QuoteAsset 结构

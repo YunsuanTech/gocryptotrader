@@ -130,6 +130,9 @@ func main() {
 		transferTokenCommand,
 		buySOLTokenCommand,
 		stopSOLTokenMonitorCommand,
+		getProfitLossCommand,
+		tradeTokenBySignalCommand,
+		stopSignalMonitorCommand,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

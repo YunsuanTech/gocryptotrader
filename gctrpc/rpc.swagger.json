@@ -68,6 +68,28 @@
         ]
       }
     },
+    "/v1/get_profit_loss": {
+      "get": {
+        "operationId": "GoCryptoTraderService_GetProfitLoss",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcGetProfitLossResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
     "/v1/getaccounts": {
       "get": {
         "operationId": "GoCryptoTraderService_GetAccounts",
@@ -223,6 +245,36 @@
         ]
       }
     },
+    "/v1/stop_signal_monitor": {
+      "post": {
+        "operationId": "GoCryptoTraderService_StopSignalMonitor",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcStopSignalMonitorResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tokenAddress",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
     "/v1/stop_sol_token_monitor": {
       "post": {
         "operationId": "GoCryptoTraderService_StopSOLTokenMonitor",
@@ -240,6 +292,51 @@
             }
           }
         },
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
+    "/v1/trade_token_by_signal": {
+      "post": {
+        "operationId": "GoCryptoTraderService_TradeTokenBySignal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcTradeTokenBySignalResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tokenAddress",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "buyPrice",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "tradeRatio",
+            "description": "可选参数，交易比例，范围0-1，默认为1（全部）",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          }
+        ],
         "tags": [
           "GoCryptoTraderService"
         ]
@@ -414,6 +511,18 @@
         }
       }
     },
+    "gctrpcGetProfitLossResponse": {
+      "type": "object",
+      "properties": {
+        "tokenProfitLosses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/gctrpcTokenProfitLoss"
+          }
+        }
+      }
+    },
     "gctrpcGetRPCEndpointsResponse": {
       "type": "object",
       "properties": {
@@ -466,6 +575,17 @@
         }
       }
     },
+    "gctrpcStopSignalMonitorResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "gctrpcTimestamp": {
       "type": "object",
       "properties": {
@@ -495,6 +615,37 @@
         },
         "lastUpdate": {
           "$ref": "#/definitions/gctrpcTimestamp"
+        }
+      }
+    },
+    "gctrpcTokenProfitLoss": {
+      "type": "object",
+      "properties": {
+        "tokenAddress": {
+          "type": "string"
+        },
+        "totalBuyAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalSellAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "profitLoss": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "gctrpcTradeTokenBySignalResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
         }
       }
     },

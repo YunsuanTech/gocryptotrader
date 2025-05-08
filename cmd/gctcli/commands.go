@@ -9,10 +9,32 @@ import (
 var startTime, endTime, orderingDirection string
 var limit int
 
+var tradeTokenBySignalCommand = &cli.Command{
+	Name:   "tradetokenbysignal",
+	Usage:  "trade token by signal",
+	Action: tradeTokenBySignal,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "token_address",
+			Usage: "the address of the token to trade",
+		},
+		&cli.Float64Flag{
+			Name:  "buy_price",
+			Usage: "the price to buy the token",
+		},
+	},
+}
+
 var getAccountsCommand = &cli.Command{
 	Name:   "getaccounts",
 	Usage:  "gets GoCryptoTrader accounts",
 	Action: getAccounts,
+}
+
+var getProfitLossCommand = &cli.Command{
+	Name:   "getProfitLoss",
+	Usage:  "gets GoCryptoTrader ProfitLoss",
+	Action: getProfitLoss,
 }
 
 var buySOLTokenCommand = &cli.Command{
@@ -25,6 +47,18 @@ var stopSOLTokenMonitorCommand = &cli.Command{
 	Name:   "stopSOLTokenMonitor",
 	Usage:  "stops SOL token monitoring service",
 	Action: StopSOLTokenMonitor,
+}
+
+var stopSignalMonitorCommand = &cli.Command{
+	Name:   "stopsignalmonitor",
+	Usage:  "stops signal monitoring service",
+	Action: stopSignalMonitor,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "token_address",
+			Usage: "the address of the token to trade",
+		},
+	},
 }
 
 var getTokenPriceCommand = &cli.Command{
@@ -147,6 +181,26 @@ func getAccounts(c *cli.Context) error {
 	return nil
 }
 
+func getProfitLoss(c *cli.Context) error {
+	conn, cancel, err := setupClient(c)
+	if err != nil {
+		return err
+	}
+	defer closeConn(conn, cancel)
+
+	client := gctrpc.NewGoCryptoTraderServiceClient(conn)
+	result, err := client.GetProfitLoss(c.Context,
+		&gctrpc.GetProfitLossRequest{},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	jsonOutput(result)
+	return nil
+}
+
 func BuySOLToken(c *cli.Context) error {
 	conn, cancel, err := setupClient(c)
 	if err != nil {
@@ -222,6 +276,53 @@ func crypto(c *cli.Context) error {
 	result, err := client.Crypto(c.Context,
 		&gctrpc.CryptoRequest{
 			Plaintext: plaintext,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	jsonOutput(result)
+	return nil
+}
+
+func stopSignalMonitor(c *cli.Context) error {
+	conn, cancel, err := setupClient(c)
+	if err != nil {
+		return err
+	}
+	defer closeConn(conn, cancel)
+	tokenAddress := c.String("token_address")
+	client := gctrpc.NewGoCryptoTraderServiceClient(conn)
+	result, err := client.StopSignalMonitor(c.Context,
+		&gctrpc.StopSignalMonitorRequest{
+			TokenAddress: tokenAddress,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	jsonOutput(result)
+	return nil
+}
+
+func tradeTokenBySignal(c *cli.Context) error {
+	conn, cancel, err := setupClient(c)
+	if err != nil {
+		return err
+	}
+	defer closeConn(conn, cancel)
+
+	tokenAddress := c.String("token_address")
+	buyPrice := c.Float64("buy_price")
+	client := gctrpc.NewGoCryptoTraderServiceClient(conn)
+	result, err := client.TradeTokenBySignal(c.Context,
+		&gctrpc.TradeTokenBySignalRequest{
+			TokenAddress: tokenAddress,
+			BuyPrice:     buyPrice,
 		},
 	)
 

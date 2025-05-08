@@ -30,6 +30,9 @@ const (
 	GoCryptoTraderService_StopAutoTrade_FullMethodName       = "/gctrpc.GoCryptoTraderService/StopAutoTrade"
 	GoCryptoTraderService_BuySOLToken_FullMethodName         = "/gctrpc.GoCryptoTraderService/BuySOLToken"
 	GoCryptoTraderService_StopSOLTokenMonitor_FullMethodName = "/gctrpc.GoCryptoTraderService/StopSOLTokenMonitor"
+	GoCryptoTraderService_GetProfitLoss_FullMethodName       = "/gctrpc.GoCryptoTraderService/GetProfitLoss"
+	GoCryptoTraderService_TradeTokenBySignal_FullMethodName  = "/gctrpc.GoCryptoTraderService/TradeTokenBySignal"
+	GoCryptoTraderService_StopSignalMonitor_FullMethodName   = "/gctrpc.GoCryptoTraderService/StopSignalMonitor"
 )
 
 // GoCryptoTraderServiceClient is the client API for GoCryptoTraderService service.
@@ -47,6 +50,9 @@ type GoCryptoTraderServiceClient interface {
 	StopAutoTrade(ctx context.Context, in *StopAutoTradeRequest, opts ...grpc.CallOption) (*StopAutoTradeResponse, error)
 	BuySOLToken(ctx context.Context, in *BuySOLTokenRequest, opts ...grpc.CallOption) (*BuySOLTokenResponse, error)
 	StopSOLTokenMonitor(ctx context.Context, in *StopAutoTradeRequest, opts ...grpc.CallOption) (*StopAutoTradeResponse, error)
+	GetProfitLoss(ctx context.Context, in *GetProfitLossRequest, opts ...grpc.CallOption) (*GetProfitLossResponse, error)
+	TradeTokenBySignal(ctx context.Context, in *TradeTokenBySignalRequest, opts ...grpc.CallOption) (*TradeTokenBySignalResponse, error)
+	StopSignalMonitor(ctx context.Context, in *StopSignalMonitorRequest, opts ...grpc.CallOption) (*StopSignalMonitorResponse, error)
 }
 
 type goCryptoTraderServiceClient struct {
@@ -167,6 +173,36 @@ func (c *goCryptoTraderServiceClient) StopSOLTokenMonitor(ctx context.Context, i
 	return out, nil
 }
 
+func (c *goCryptoTraderServiceClient) GetProfitLoss(ctx context.Context, in *GetProfitLossRequest, opts ...grpc.CallOption) (*GetProfitLossResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProfitLossResponse)
+	err := c.cc.Invoke(ctx, GoCryptoTraderService_GetProfitLoss_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goCryptoTraderServiceClient) TradeTokenBySignal(ctx context.Context, in *TradeTokenBySignalRequest, opts ...grpc.CallOption) (*TradeTokenBySignalResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TradeTokenBySignalResponse)
+	err := c.cc.Invoke(ctx, GoCryptoTraderService_TradeTokenBySignal_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goCryptoTraderServiceClient) StopSignalMonitor(ctx context.Context, in *StopSignalMonitorRequest, opts ...grpc.CallOption) (*StopSignalMonitorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StopSignalMonitorResponse)
+	err := c.cc.Invoke(ctx, GoCryptoTraderService_StopSignalMonitor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GoCryptoTraderServiceServer is the server API for GoCryptoTraderService service.
 // All implementations must embed UnimplementedGoCryptoTraderServiceServer
 // for forward compatibility.
@@ -182,6 +218,9 @@ type GoCryptoTraderServiceServer interface {
 	StopAutoTrade(context.Context, *StopAutoTradeRequest) (*StopAutoTradeResponse, error)
 	BuySOLToken(context.Context, *BuySOLTokenRequest) (*BuySOLTokenResponse, error)
 	StopSOLTokenMonitor(context.Context, *StopAutoTradeRequest) (*StopAutoTradeResponse, error)
+	GetProfitLoss(context.Context, *GetProfitLossRequest) (*GetProfitLossResponse, error)
+	TradeTokenBySignal(context.Context, *TradeTokenBySignalRequest) (*TradeTokenBySignalResponse, error)
+	StopSignalMonitor(context.Context, *StopSignalMonitorRequest) (*StopSignalMonitorResponse, error)
 	mustEmbedUnimplementedGoCryptoTraderServiceServer()
 }
 
@@ -224,6 +263,15 @@ func (UnimplementedGoCryptoTraderServiceServer) BuySOLToken(context.Context, *Bu
 }
 func (UnimplementedGoCryptoTraderServiceServer) StopSOLTokenMonitor(context.Context, *StopAutoTradeRequest) (*StopAutoTradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopSOLTokenMonitor not implemented")
+}
+func (UnimplementedGoCryptoTraderServiceServer) GetProfitLoss(context.Context, *GetProfitLossRequest) (*GetProfitLossResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfitLoss not implemented")
+}
+func (UnimplementedGoCryptoTraderServiceServer) TradeTokenBySignal(context.Context, *TradeTokenBySignalRequest) (*TradeTokenBySignalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TradeTokenBySignal not implemented")
+}
+func (UnimplementedGoCryptoTraderServiceServer) StopSignalMonitor(context.Context, *StopSignalMonitorRequest) (*StopSignalMonitorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopSignalMonitor not implemented")
 }
 func (UnimplementedGoCryptoTraderServiceServer) mustEmbedUnimplementedGoCryptoTraderServiceServer() {}
 func (UnimplementedGoCryptoTraderServiceServer) testEmbeddedByValue()                               {}
@@ -444,6 +492,60 @@ func _GoCryptoTraderService_StopSOLTokenMonitor_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoCryptoTraderService_GetProfitLoss_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProfitLossRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServiceServer).GetProfitLoss(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoCryptoTraderService_GetProfitLoss_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServiceServer).GetProfitLoss(ctx, req.(*GetProfitLossRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoCryptoTraderService_TradeTokenBySignal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TradeTokenBySignalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServiceServer).TradeTokenBySignal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoCryptoTraderService_TradeTokenBySignal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServiceServer).TradeTokenBySignal(ctx, req.(*TradeTokenBySignalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoCryptoTraderService_StopSignalMonitor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopSignalMonitorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServiceServer).StopSignalMonitor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoCryptoTraderService_StopSignalMonitor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServiceServer).StopSignalMonitor(ctx, req.(*StopSignalMonitorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GoCryptoTraderService_ServiceDesc is the grpc.ServiceDesc for GoCryptoTraderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -494,6 +596,18 @@ var GoCryptoTraderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StopSOLTokenMonitor",
 			Handler:    _GoCryptoTraderService_StopSOLTokenMonitor_Handler,
+		},
+		{
+			MethodName: "GetProfitLoss",
+			Handler:    _GoCryptoTraderService_GetProfitLoss_Handler,
+		},
+		{
+			MethodName: "TradeTokenBySignal",
+			Handler:    _GoCryptoTraderService_TradeTokenBySignal_Handler,
+		},
+		{
+			MethodName: "StopSignalMonitor",
+			Handler:    _GoCryptoTraderService_StopSignalMonitor_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

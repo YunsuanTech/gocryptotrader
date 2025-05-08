@@ -3,6 +3,8 @@ module gocryptotrader
 go 1.23.0
 
 require (
+	github.com/bogdanfinn/fhttp v0.5.36
+	github.com/bogdanfinn/tls-client v1.9.1
 	github.com/buger/jsonparser v1.1.1
 	github.com/donutnomad/solana-web3 v0.0.0-20250313072913-99732fd085a1
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -35,6 +37,8 @@ require (
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/bits-and-blooms/bitset v1.17.0 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
+	github.com/bogdanfinn/utls v1.6.5 // indirect
+	github.com/cloudflare/circl v1.5.0 // indirect
 	github.com/consensys/bavard v0.1.22 // indirect
 	github.com/consensys/gnark-crypto v0.14.0 // indirect
 	github.com/crate-crypto/go-ipa v0.0.0-20240724233137-53bbb0ceb27a // indirect
@@ -62,10 +66,11 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mostynb/zstdpool-freelist v0.0.0-20201229113212-927304c0c3b1 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
+	github.com/quic-go/quic-go v0.48.1 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
 	github.com/supranational/blst v0.3.14 // indirect
+	github.com/tam7t/hpkp v0.0.0-20160821193359-2b70b4024ed5 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -94,7 +99,7 @@ require (
 	github.com/urfave/cli v1.22.16
 	github.com/valyala/fasthttp v1.60.0
 	github.com/volatiletech/inflect v0.0.1 // indirect
-	github.com/volatiletech/sqlboiler v3.7.1+incompatible // indirect
+	github.com/volatiletech/sqlboiler v3.7.1+incompatible
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect

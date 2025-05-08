@@ -30,11 +30,33 @@ const theme = extendTheme({
       card: '#1E1E1E', // 卡片背景色
       hover: '#2A2A2A', // 悬停背景色
       header: '#1A1A1A', // 头部背景色
+      gray: '#1A1A1A', // 灰色背景
     },
     // 边框颜色
     border: {
       dark: 'rgba(255, 255, 255, 0.1)', // 暗色主题边框
+      hover: 'rgba(255, 255, 255, 0.2)', // 悬停边框
     },
+    // 强调色
+    accent: {
+      primary: '#3A74FF', // 主要强调色
+      primaryHover: '#2A64EF', // 主要强调色悬停
+      secondary: '#2A2A2A', // 次要强调色
+    },
+    // 主色调
+    primary: {
+      500: '#3A74FF',
+      hover: '#2A64EF',
+    },
+    // 代币颜色
+    btc: { color: '#F7931A' },
+    eth: { color: '#627EEA' },
+    bnb: { color: '#F3BA2F' },
+    sol: { color: '#00FFA3' },
+    ada: { color: '#0033AD' },
+    xrp: { color: '#23292F' },
+    // 图表颜色
+    chartreuse: '#00C853',
   },
   fonts: {
     body: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
