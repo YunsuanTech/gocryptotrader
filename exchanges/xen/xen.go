@@ -53,7 +53,9 @@ var XenConfigs = map[string]Config{
 		RewardAddress: RewardJieAddress,
 		Shared:        100,
 		Cipher:        "cDRPMTx+DWBGhgXLVi27Aqh+CZttWC0++CC1VJ//omDTXG355su+EsS4XuuHMH7+F5hKsUxFv4fEPtumq9HyhwhDrHvLffzvPTwSCSLDzNNqgoZTySQLhAdXgCkjFL15VWVQXSibV8/gk3dvrcHOaYh3rM+iMqUPOsjNjM96hDdLSrE69clmlRa7d3Ez3w/0Ji6bXP8zQmQO7FU+sf5S8LPl0YCHwzvvMOKqQrjLKmd5v5JPf1yt2SqWiHJQN30nzp9x1LYABHOL/x4yxgw+jDxGPbuEva6OW3xbiFWbVmnmK5YqcOPNVOtRDG3eYylsli1eVThwlWBxK3ItXmi7w1Ecyy8AkBIbSHzaw6IGyvwolFRFtFlURsjO2bwsLLGrA1sewzYhnIGDMmA/OfKOurwlwpMd1ufRb9GgoUpoKLng4ZPxJg3X8d18lxIYCVGZsmdfwDEasJgbjUNsaRuCzZ9cm5RssDsnbyBOpzgi1WFCUxlq3iy9Usv//N/whdHJ",
-		SubKey:        "06cb90517d35061a38342e9cbcb6",
+		Keys: map[string]string{
+			"default": "06cb90517d35061a38342e9cbcb6",
+		},
 	},
 	"sniper": {
 		XenAddress:    XEN_ADDRESS,
@@ -66,7 +68,9 @@ var XenConfigs = map[string]Config{
 		VMPXABI:       VMPX_ETH_ABI,
 		RewardAddress: RewardJieAddress,
 		Shared:        100,
-		SubKey:        "06cb90517d35061a38342e9cbcb6",
+		Keys: map[string]string{
+			"default": "06cb90517d35061a38342e9cbcb6",
+		},
 	},
 }
 
@@ -77,7 +81,7 @@ type Config struct {
 	ProxyAddress  string
 	XenAddress    string
 	XenftAddress  string
-	SubKey        string
+	Keys          map[string]string
 	ChainID       *big.Int
 	MaxBaseFee    float64
 	RewardAddress string

@@ -518,7 +518,7 @@ func matchSellRule(monitor *sqlite3.TokenMonitor, rule BuyRule) bool {
 // TradeTokenBySignal 根据交易信号执行买入或卖出操作
 // 输入代币地址、买入价格和交易比例，通过AnalyzeKlineSignal方法判断是否应该买入或卖出
 // 根据信号结果创建相应的交易记录并保存到数据库中
-// 支持多次买入卖出，不需要将数据添加到监控列表，只创建交易记录
+// 支持多次买入卖出，将数据添加到监控表中，并创建交易记录
 // tradeRatio: 交易比例，范围0-1，表示买入或卖出的比例，默认为1（全部）
 func TradeTokenBySignal(tokenAddress string, buyPrice float64, tradeRatio ...float64) error {
 	ctx := context.Background()
@@ -540,6 +540,10 @@ func TradeTokenBySignal(tokenAddress string, buyPrice float64, tradeRatio ...flo
 	if err != nil {
 		return fmt.Errorf("获取代币价格失败: %v", err)
 	}
+
+	// 获取代币名称，如果无法获取则使用地址作为名称
+	tokenName := tokenAddress
+	// 这里可以添加获取代币名称的逻辑，如果有相关API的话
 
 	// 根据信号执行相应操作
 	switch signal {
@@ -602,45 +606,60 @@ func TradeTokenBySignal(tokenAddress string, buyPrice float64, tradeRatio ...flo
 		// 更新持仓统计
 		newHoldAmount := currentHoldAmount + amount
 		newAvgPrice := (totalCost + (amount * tokenPrice.USDPrice)) / newHoldAmount
+		// 修正涨幅计算公式：(当前价格 - 持仓均价) / 持仓均价
 		increase := (tokenPrice.USDPrice - newAvgPrice) / newAvgPrice
 
-		log.Printf("【买入成功】Token %s", tokenAddress)
-		log.Printf("【最新持仓】持有数量: %.6f | 平均成本: %.6f USD | 当前涨幅: %.2f%%",
-			newHoldAmount, newAvgPrice, increase*100)
-		log.Printf("================================================================")
-
-		// 更新监控记录（可选，不影响主要功能）
-		monitorsInterface, err := tokenmonitor.QueryTokenMonitors(tokenmonitor.TokenMonitorQueryOptions{
+		// 更新或创建代币监控记录
+		// 先查询是否已存在该代币的监控记录
+		monitorRecordsInterface, err := tokenmonitor.QueryTokenMonitors(tokenmonitor.TokenMonitorQueryOptions{
 			TokenAddress: tokenAddress,
-			Limit:        1,
 		})
 
+		var tokenMonitor *sqlite3.TokenMonitor
+		var isNewRecord bool = true
+
+		// 检查是否已有监控记录
 		if err == nil {
-			if monitors, ok := monitorsInterface.(sqlite3.TokenMonitorSlice); ok && len(monitors) > 0 {
-				// 更新现有记录
-				monitor := monitors[0]
-				monitor.Amount = newHoldAmount
-				monitor.BuyAmount += amount
-				monitor.BuyPrice = newAvgPrice
-				monitor.Price = tokenPrice.USDPrice
-				monitor.Increase = increase
-				_ = tokenmonitor.UpdateTokenMonitor(ctx, monitor)
-			} else {
-				// 创建新的监控记录
-				tokenMonitor := &sqlite3.TokenMonitor{
-					TokenAddress:  tokenAddress,
-					TokenName:     tokenAddress[:8] + "...", // 简化显示
-					Price:         tokenPrice.USDPrice,
-					TokenDecimals: 9,
-					BuyAmount:     amount,
-					Amount:        amount,
-					BuyPrice:      tokenPrice.USDPrice,
-					BuyTime:       time.Now().Unix(),
-					IsMonitoring:  0,
-				}
-				_ = tokenmonitor.InsertTokenMonitor(ctx, tokenMonitor)
+			if monitorRecords, ok := monitorRecordsInterface.(sqlite3.TokenMonitorSlice); ok && len(monitorRecords) > 0 {
+				// 已存在记录，更新现有记录
+				tokenMonitor = monitorRecords[0]
+				isNewRecord = false
 			}
 		}
+
+		// 如果没有找到记录，创建新的监控记录
+		if isNewRecord {
+			tokenMonitor = &sqlite3.TokenMonitor{
+				TokenAddress:  tokenAddress,
+				TokenName:     tokenName,
+				TokenDecimals: 9, // 默认为9，可以根据实际情况调整
+				IsMonitoring:  1, // 默认开启监控
+			}
+		}
+
+		// 更新监控记录的字段
+		tokenMonitor.Price = tokenPrice.USDPrice
+		tokenMonitor.Amount = newHoldAmount
+		tokenMonitor.BuyAmount = amount
+		tokenMonitor.BuyPrice = tokenPrice.USDPrice
+		tokenMonitor.BuyTime = time.Now().Unix()
+		tokenMonitor.Increase = increase
+
+		// 保存监控记录
+		if isNewRecord {
+			if err := tokenmonitor.InsertTokenMonitor(ctx, tokenMonitor); err != nil {
+				log.Printf("警告：插入代币监控记录失败: %v", err)
+			}
+		} else {
+			if err := tokenmonitor.UpdateTokenMonitor(ctx, tokenMonitor); err != nil {
+				log.Printf("警告：更新代币监控记录失败: %v", err)
+			}
+		}
+
+		log.Printf("【买入成功】Token %s", tokenAddress)
+		log.Printf("【最新持仓】持有数量: %.6f | 持仓均价: %.6f USD | 当前涨幅: %.2f%%",
+			newHoldAmount, newAvgPrice, increase*100)
+		log.Printf("================================================================")
 
 	case SignalSell:
 		// 获取该代币的交易记录，计算持有数量
@@ -669,10 +688,9 @@ func TradeTokenBySignal(tokenAddress string, buyPrice float64, tradeRatio ...flo
 
 		// 计算当前持仓情况
 		var (
-			holdAmount     float64 // 当前持有数量
-			totalCost      float64 // 总成本
-			totalSold      float64 // 已卖出数量
-			totalSoldValue float64 // 已卖出总价值
+			holdAmount float64 // 当前持有数量
+			totalCost  float64 // 总成本
+			totalSold  float64 // 已卖出数量
 		)
 
 		// 使用FIFO方法计算当前持仓
@@ -682,8 +700,7 @@ func TradeTokenBySignal(tokenAddress string, buyPrice float64, tradeRatio ...flo
 				totalCost += record.Amount * record.Price
 			} else if record.Type == "sell" {
 				holdAmount -= record.Amount
-				totalSold += record.Amount
-				totalSoldValue += record.Amount * record.Price
+				totalSold += record.Amount * record.Price
 			}
 		}
 
@@ -743,61 +760,60 @@ func TradeTokenBySignal(tokenAddress string, buyPrice float64, tradeRatio ...flo
 			newAvgCost = newTotalCost / newHoldAmount
 		}
 
+		// 更新代币监控记录
+		// 先查询是否已存在该代币的监控记录
+		monitorRecordsInterface, err := tokenmonitor.QueryTokenMonitors(tokenmonitor.TokenMonitorQueryOptions{
+			TokenAddress: tokenAddress,
+		})
+
+		var tokenMonitor *sqlite3.TokenMonitor
+		var isNewRecord bool = true
+
+		// 检查是否已有监控记录
+		if err == nil {
+			if monitorRecords, ok := monitorRecordsInterface.(sqlite3.TokenMonitorSlice); ok && len(monitorRecords) > 0 {
+				// 已存在记录，更新现有记录
+				tokenMonitor = monitorRecords[0]
+				isNewRecord = false
+			}
+		}
+
+		// 如果没有找到记录，创建新的监控记录
+		if isNewRecord {
+			tokenMonitor = &sqlite3.TokenMonitor{
+				TokenAddress:  tokenAddress,
+				TokenName:     tokenName,
+				TokenDecimals: 9, // 默认为9，可以根据实际情况调整
+				IsMonitoring:  1, // 默认开启监控
+			}
+		}
+
+		// 更新监控记录的字段
+		tokenMonitor.Price = tokenPrice.USDPrice
+		tokenMonitor.Amount = newHoldAmount
+		tokenMonitor.SellPercentage = ratio * 100
+		tokenMonitor.TotalSellPrice = tokenMonitor.TotalSellPrice + sellValue
+		tokenMonitor.LastSellTime = float64(time.Now().Unix())
+		tokenMonitor.Increase = sellProfitRate
+
+		// 保存监控记录
+		if isNewRecord {
+			if err := tokenmonitor.InsertTokenMonitor(ctx, tokenMonitor); err != nil {
+				log.Printf("警告：插入代币监控记录失败: %v", err)
+			}
+		} else {
+			if err := tokenmonitor.UpdateTokenMonitor(ctx, tokenMonitor); err != nil {
+				log.Printf("警告：更新代币监控记录失败: %v", err)
+			}
+		}
+
 		log.Printf("【卖出成功】Token %s", tokenAddress)
 		log.Printf("【最新持仓】持有数量: %.6f | 持仓均价: %.6f USD | 当前价格: %.6f USD",
 			newHoldAmount, newAvgCost, tokenPrice.USDPrice)
 		log.Printf("================================================================")
 
-		// 更新监控记录
-		monitorsInterface, err := tokenmonitor.QueryTokenMonitors(tokenmonitor.TokenMonitorQueryOptions{
-			TokenAddress: tokenAddress,
-			Limit:        1,
-		})
-
-		if err == nil {
-			if monitors, ok := monitorsInterface.(sqlite3.TokenMonitorSlice); ok && len(monitors) > 0 {
-				monitor := monitors[0]
-				monitor.Amount = newHoldAmount
-				monitor.Price = tokenPrice.USDPrice
-				monitor.BuyPrice = newAvgCost
-				monitor.Increase = (tokenPrice.USDPrice - newAvgCost) / newAvgCost
-				monitor.SellPercentage = (monitor.BuyAmount - newHoldAmount) / monitor.BuyAmount
-				monitor.TotalSellPrice += sellValue
-				monitor.LastSellTime = float64(time.Now().Unix())
-
-				// 如果全部卖出，停止监控
-				if newHoldAmount <= 0 {
-					monitor.IsMonitoring = 0
-				}
-
-				_ = tokenmonitor.UpdateTokenMonitor(ctx, monitor)
-			}
-		}
-
 	case SignalHold:
 		log.Printf("【持有信号】Token %s 当前无交易信号，保持持有", tokenAddress)
-
-		// 可选：更新价格信息
-		monitorsInterface, err := tokenmonitor.QueryTokenMonitors(tokenmonitor.TokenMonitorQueryOptions{
-			TokenAddress: tokenAddress,
-			Limit:        1,
-		})
-
-		if err == nil {
-			monitors, ok := monitorsInterface.(sqlite3.TokenMonitorSlice)
-			if ok && len(monitors) > 0 {
-				// 更新价格信息
-				monitor := monitors[0]
-				monitor.Price = tokenPrice.USDPrice
-				monitor.Increase = (monitor.Price - monitor.BuyPrice) / monitor.BuyPrice
-
-				// 更新数据库记录（可选，不影响主要功能）
-				_ = tokenmonitor.UpdateTokenMonitor(ctx, monitor)
-
-				log.Printf("【价格更新】Token %s 当前价格: %.6f USD | 涨幅: %.2f%%",
-					tokenAddress, monitor.Price, monitor.Increase*100)
-			}
-		}
 
 		// 获取该代币的交易记录，计算持有数量和平均买入价格（用于日志显示）
 		recordsInterface, err := transactionrecord.QueryTransactionRecords(transactionrecord.TransactionRecordQueryOptions{
@@ -805,12 +821,14 @@ func TradeTokenBySignal(tokenAddress string, buyPrice float64, tradeRatio ...flo
 			Status:       "confirmed",
 		})
 
+		var holdAmount float64
+		var avgBuyPrice float64
+		var increase float64
+
 		if err == nil {
 			records, ok := recordsInterface.(sqlite3.TransactionRecordSlice)
 			if ok {
 				// 计算当前持有数量
-				var holdAmount float64
-
 				// 先计算总的买入和卖出数量
 				for _, record := range records {
 					if record.Type == "buy" {
@@ -875,11 +893,58 @@ func TradeTokenBySignal(tokenAddress string, buyPrice float64, tradeRatio ...flo
 					}
 
 					// 计算平均买入价格和涨幅
-					avgBuyPrice := currentHoldValue / holdAmount
-					increase := (tokenPrice.USDPrice - avgBuyPrice) / avgBuyPrice
+					avgBuyPrice = currentHoldValue / holdAmount
+					increase = (tokenPrice.USDPrice - avgBuyPrice) / avgBuyPrice
 
 					log.Printf("【持仓信息】Token %s 持有数量: %.6f | 平均买入价: %.6f | 当前价格: %.6f | 涨幅: %.2f%%",
 						tokenAddress, holdAmount, avgBuyPrice, tokenPrice.USDPrice, increase*100)
+				}
+			}
+		}
+
+		// 更新代币监控记录
+		// 先查询是否已存在该代币的监控记录
+		monitorRecordsInterface, err := tokenmonitor.QueryTokenMonitors(tokenmonitor.TokenMonitorQueryOptions{
+			TokenAddress: tokenAddress,
+		})
+
+		// 只有当持有数量大于0时才更新监控记录
+		if holdAmount > 0 {
+			var tokenMonitor *sqlite3.TokenMonitor
+			var isNewRecord bool = true
+
+			// 检查是否已有监控记录
+			if err == nil {
+				if monitorRecords, ok := monitorRecordsInterface.(sqlite3.TokenMonitorSlice); ok && len(monitorRecords) > 0 {
+					// 已存在记录，更新现有记录
+					tokenMonitor = monitorRecords[0]
+					isNewRecord = false
+				}
+			}
+
+			// 如果没有找到记录，创建新的监控记录
+			if isNewRecord {
+				tokenMonitor = &sqlite3.TokenMonitor{
+					TokenAddress:  tokenAddress,
+					TokenName:     tokenName,
+					TokenDecimals: 9, // 默认为9，可以根据实际情况调整
+					IsMonitoring:  1, // 默认开启监控
+				}
+			}
+
+			// 更新监控记录的字段
+			tokenMonitor.Price = tokenPrice.USDPrice
+			tokenMonitor.Amount = holdAmount
+			tokenMonitor.Increase = increase
+
+			// 保存监控记录
+			if isNewRecord {
+				if err := tokenmonitor.InsertTokenMonitor(ctx, tokenMonitor); err != nil {
+					log.Printf("警告：插入代币监控记录失败: %v", err)
+				}
+			} else {
+				if err := tokenmonitor.UpdateTokenMonitor(ctx, tokenMonitor); err != nil {
+					log.Printf("警告：更新代币监控记录失败: %v", err)
 				}
 			}
 		}

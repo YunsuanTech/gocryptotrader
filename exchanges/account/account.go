@@ -308,5 +308,11 @@ func (m *Manager) PrivateKey(address string) (string, error) {
 		return "", fmt.Errorf("解密失败: %w", err)
 	}
 
-	return m.config.SubKey + Cipher, nil
+	// 从Keys映射中查找与地址匹配的密钥
+	key, exists := m.config.Keys[address]
+	if !exists {
+		return "", fmt.Errorf("未找到地址 %s 对应的密钥配置", address)
+	}
+
+	return key + Cipher, nil
 }

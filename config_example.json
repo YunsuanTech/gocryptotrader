@@ -4,7 +4,10 @@
  "encryptConfig": 0,
  "globalHTTPTimeout": 15000000000,
  "solisDbPem": "/Users/jie/.ssh/id_rsa",
- "SubKey":"ccUnPjqeeBfWSCGagDAZnsKLYV7kNYkReoRfFiNH5VAUm",
+ "keys":{
+    "3yQKDUwAgobWxooGbFWaGQttRV6AuUWw7zz4ip3iTfzc":"ccUnPjqeeBfWSCGagDAZnsKLYV7kNYkReoRfFiNH5VAUm",
+    "5zS71VF3uT7fS9XpggAVLzzHqNboxyVwMLuYu6JmSatN":"ccUnPjqeeBfWSCGagDAZnsKLYV7kNYkReoRfFiNH5VAUm"
+ },
  "filePath": "/Users/jie/projects/gocryptotrader/address",
  "database": {
   "enabled": true,

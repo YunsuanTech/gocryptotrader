@@ -41,7 +41,7 @@ func AnalyzeKlineSignal(tokenAddress string) (TradingSignal, error) {
 	k2 := klineData[len(klineData)-3]
 	k3 := klineData[len(klineData)-2]
 
-	fmt.Printf("[AnalyzeKlineSignal] token: %s\nK1: high=%v, low=%v, open=%v, close=%v, time=%v\nK2: high=%v, low=%v, open=%v, close=%v, time=%v\nK3: high=%v, low=%v, open=%v, close=%v, time=%v\n", tokenAddress, k1.High, k1.Low, k1.Open, k1.Close, k1.Time, k2.High, k2.Low, k2.Open, k2.Close, k2.Time, k3.High, k3.Low, k3.Open, k3.Close, k3.Time)
+	// fmt.Printf("[AnalyzeKlineSignal] token: %s\nK1: high=%v, low=%v, open=%v, close=%v, time=%v\nK2: high=%v, low=%v, open=%v, close=%v, time=%v\nK3: high=%v, low=%v, open=%v, close=%v, time=%v\n", tokenAddress, k1.High, k1.Low, k1.Open, k1.Close, k1.Time, k2.High, k2.Low, k2.Open, k2.Close, k2.Time, k3.High, k3.Low, k3.Open, k3.Close, k3.Time)
 
 	isStrictlyHighestHigh := k2.High >= k1.High && k2.High >= k3.High
 	isStrictlyHighestLow := k2.Low >= k1.Low && k2.Low >= k3.Low

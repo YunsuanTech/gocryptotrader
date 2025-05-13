@@ -37,7 +37,7 @@ func NewGMGNFetcher() (*GMGNFetcher, error) {
 
 	return &GMGNFetcher{
 		client:    client,
-		cookie:    "cf_clearance=ErI2quTrZjRnEfDtS_tfjSLcX6bzooZlKHE2jXc2l3c-1746667491-1.2.1.1-5RF8qerYLnpQaaAIqCE.fpOfuPiGzlCtluZnqAeyC9XXkx4NrKYsgOKg5GLvQS0Bz4QcP3UFT.bifjGyPHitPK8A7_4ircc.qlb7A95gth2AyLTuiT7xD9ELJhLwNlGqTPjZrOSEVhfhQ5K2G2lgIcKpv6F5sYVylwCMfeeZgCMD.d7mtVP8W2xQ.E.QL49gPTTgDz6AhVD1n3kTK1Z0_qEdts2UudlYxTkrZ_KI5WTs2WTWFsNKCTYMP4tgTqIhYAopoq_b36L.72hw3WSDwU0lJUqO2CTw9JLZCLrzlnVuKdGJmLyQ9q.oHw31m74Kih3sBuFq5BsTM5sgCmcBdBIzM8okkZZ9KUhWbrfsBSbsKGakAvws5j9F9_cTFHTA",
+		cookie:    "cf_clearance=rOx1OGK6hHPj9o1JtX3D9LsgOKUMJLb3HCXdYsFVMoA-1746840432-1.2.1.1-2cRtUpKM68ZpYrsiK4BvfTrUYoXUszultJJtRACzqH0QH5kqtRkN4onbmjZ3XCyGyt53l7qwtQOePPcW4l_rUOCbEAPtKn0YtoxXiEmu3gvOTFPYeD6NFECmNdU9jNE4ejfN4K5rqzm2OLmjok0D4xUk9wzjxPQzWovEBu8il5a5BXHifaK3ncTcox9JzTWtkAFx.NTzWssmTrjwMfbjDW4VbZVmBzL7sqqsubK.yno0n80p02mLY_nxbUrTs3zW9IHcvbwcPDr0euOlE.Hpxp5sl.ryDvzGHKexK9uWEEIrDZJhr6JN6LV9iROgvtkS_ZtjPSJl69yzitnyF7eahDVaC7m96xc3ujch9EJo.WADS3Kiuwq7dqYQKAcTH5H9",
 		userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
 	}, nil
 }
