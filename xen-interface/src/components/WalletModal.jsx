@@ -16,6 +16,8 @@ import {
   VStack,
   Spinner,
   Button,
+  Alert,
+  AlertIcon,
 } from '@chakra-ui/react';
 
 // 钱包图标数据
@@ -187,7 +189,7 @@ const WalletModal = ({ isOpen, onClose }) => {
             </Flex>
           ) : (
             <VStack spacing={2} align="stretch">
-            {/* Phantom 钱包 */}
+            {/* Phantom 钱包 - Solana网络专用钱包 */}
             <Flex 
               cursor="pointer" 
               borderBottom="1px solid" 
@@ -215,85 +217,7 @@ const WalletModal = ({ isOpen, onClose }) => {
                 <Flex alignItems="center" gap={3}>
                   <Image src={walletIcons.phantom} alt="Phantom icon" w="24px" h="24px" />
                   <Text fontSize="base" fontWeight="medium" lineHeight="20px">
-                    Phantom
-                  </Text>
-                </Flex>
-                <Box>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-gray-400">
-                    <path d="m9 18 6-6-6-6"></path>
-                  </svg>
-                </Box>
-              </Flex>
-            </Flex>
-
-            {/* MetaMask 钱包 */}
-            <Flex 
-              cursor="pointer" 
-              borderBottom="1px solid" 
-              borderColor="gray.200"
-              py={2}
-              onClick={() => {
-                const metaMaskProvider = providers.find(p => p.info.name === 'MetaMask');
-                if (metaMaskProvider) {
-                  handleWalletConnect(metaMaskProvider);
-                } else {
-                  setError('未检测到MetaMask钱包，请确保已安装MetaMask扩展');
-                }
-              }}
-            >
-              <Flex 
-                w="full" 
-                alignItems="center" 
-                justifyContent="space-between" 
-                gap={2} 
-                rounded="12px" 
-                px={3} 
-                py={4}
-                _hover={{ bg: 'gray.50' }}
-              >
-                <Flex alignItems="center" gap={3}>
-                  <Image src={walletIcons.metamask} alt="MetaMask icon" w="24px" h="24px" />
-                  <Text fontSize="base" fontWeight="medium" lineHeight="20px">
-                    MetaMask
-                  </Text>
-                </Flex>
-                <Box>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-gray-400">
-                    <path d="m9 18 6-6-6-6"></path>
-                  </svg>
-                </Box>
-              </Flex>
-            </Flex>
-
-            {/* OKX 钱包 */}
-            <Flex 
-              cursor="pointer" 
-              borderBottom="1px solid" 
-              borderColor="gray.200"
-              py={2}
-              onClick={() => {
-                const okxProvider = providers.find(p => p.info.name === 'OKX Wallet');
-                if (okxProvider) {
-                  handleWalletConnect(okxProvider);
-                } else {
-                  setError('未检测到OKX钱包，请确保已安装OKX Wallet扩展');
-                }
-              }}
-            >
-              <Flex 
-                w="full" 
-                alignItems="center" 
-                justifyContent="space-between" 
-                gap={2} 
-                rounded="12px" 
-                px={3} 
-                py={4}
-                _hover={{ bg: 'gray.50' }}
-              >
-                <Flex alignItems="center" gap={3}>
-                  <Image src={walletIcons.okx} alt="OKX Wallet icon" w="24px" h="24px" />
-                  <Text fontSize="base" fontWeight="medium" lineHeight="20px">
-                    OKX Wallet
+                    Phantom (Solana)
                   </Text>
                 </Flex>
                 <Box>

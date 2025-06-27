@@ -496,68 +496,7 @@ const XenHome = () => {
           </VStack>
         </Box>
         
-        {/* XEN合约信息 */}
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-          <Card bg={bgColor} boxShadow="sm" borderWidth="1px" borderColor={borderColor}>
-            <CardHeader>
-              <Heading size="md">XEN合约特点</Heading>
-            </CardHeader>
-            <CardBody>
-              <VStack spacing={4} align="start">
-                <HStack>
-                  <Icon as={CheckCircleIcon} color={accentColor} />
-                  <Text>完全去中心化，无需许可</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={CheckCircleIcon} color={accentColor} />
-                  <Text>无预挖，公平发行</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={CheckCircleIcon} color={accentColor} />
-                  <Text>智能合约透明，开源代码</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={CheckCircleIcon} color={accentColor} />
-                  <Text>无管理密钥，不可更改</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={CheckCircleIcon} color={accentColor} />
-                  <Text>跨链部署，多链互通</Text>
-                </HStack>
-              </VStack>
-            </CardBody>
-          </Card>
-          
-          <Card bg={bgColor} boxShadow="sm" borderWidth="1px" borderColor={borderColor}>
-            <CardHeader>
-              <Heading size="md">如何开始</Heading>
-            </CardHeader>
-            <CardBody>
-              <VStack spacing={4} align="start">
-                <HStack align="start">
-                  <Badge colorScheme="green" fontSize="sm" borderRadius="full" px={2}>1</Badge>
-                  <Text>连接您的钱包</Text>
-                </HStack>
-                <HStack align="start">
-                  <Badge colorScheme="green" fontSize="sm" borderRadius="full" px={2}>2</Badge>
-                  <Text>选择锁定期和槽位数量</Text>
-                </HStack>
-                <HStack align="start">
-                  <Badge colorScheme="green" fontSize="sm" borderRadius="full" px={2}>3</Badge>
-                  <Text>创建槽位并支付gas费</Text>
-                </HStack>
-                <HStack align="start">
-                  <Badge colorScheme="green" fontSize="sm" borderRadius="full" px={2}>4</Badge>
-                  <Text>等待锁定期结束</Text>
-                </HStack>
-                <HStack align="start">
-                  <Badge colorScheme="green" fontSize="sm" borderRadius="full" px={2}>5</Badge>
-                  <Text>领取您的XEN奖励或选择复投</Text>
-                </HStack>
-              </VStack>
-            </CardBody>
-          </Card>
-        </SimpleGrid>
+ 
         
         {/* 交易结果模态框 */}
         <Modal isOpen={isOpen} onClose={onClose} isCentered>

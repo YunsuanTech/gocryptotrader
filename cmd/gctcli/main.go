@@ -133,6 +133,7 @@ func main() {
 		getProfitLossCommand,
 		tradeTokenBySignalCommand,
 		stopSignalMonitorCommand,
+		monitorPriceCommand,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

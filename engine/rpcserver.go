@@ -4,12 +4,15 @@ import (
 	context "context"
 	errors "errors"
 	"fmt"
+
 	"gocryptotrader/common/crypto"
 	"gocryptotrader/common/forward"
 
 	"gocryptotrader/exchanges/request"
+
 	"gocryptotrader/exchanges/token"
 	"gocryptotrader/log"
+
 	net "net"
 	http "net/http"
 	filepath "path/filepath"
@@ -113,7 +116,9 @@ func StartRPCServer(engine *Engine) {
 		log.Errorf(log.GRPCSys, "gRPC CheckCerts failed. err: %s\n", err)
 		return
 	}
+
 	log.Debugf(log.GRPCSys, "gRPC server support enabled. Starting gRPC server on https://%v.\n", engine.Config.RemoteControl.GRPC.ListenAddress)
+
 	lis, err := net.Listen("tcp", engine.Config.RemoteControl.GRPC.ListenAddress)
 	if err != nil {
 		log.Errorf(log.GRPCSys, "gRPC server failed to bind to port: %s", err)
@@ -121,6 +126,7 @@ func StartRPCServer(engine *Engine) {
 	}
 
 	creds, err := credentials.NewServerTLSFromFile(filepath.Join(targetDir, "cert.pem"), filepath.Join(targetDir, "key.pem"))
+
 	if err != nil {
 		log.Errorf(log.GRPCSys, "gRPC server could not load TLS keys: %s\n", err)
 		return
@@ -647,3 +653,39 @@ func (s *RPCServer) StopSignalMonitor(ctx context.Context, req *gctrpc.StopSigna
 		Message: "信号交易监控服务已成功停止所有代币监控",
 	}, nil
 }
+
+// // MonitorPrice 实现价格监控服务
+// func (s *RPCServer) MonitorPrice(ctx context.Context, req *gctrpc.MonitorPriceRequest) (*gctrpc.MonitorPriceResponse, error) {
+// 	if req == nil {
+// 		return nil, errNilRequestData
+// 	}
+
+// 	if req.Symbol == "" {
+// 		return nil, errors.New("交易对不能为空")
+// 	}
+
+// 	// 设置超时时间
+// 	var timeout time.Duration
+// 	if req.TimeoutSeconds > 0 {
+// 		timeout = time.Duration(req.TimeoutSeconds) * time.Second
+// 	}
+
+// 	// 创建一个自定义回调函数，用于处理行情数据并根据需要保存到数据库
+// 	callback := func(ticker handling.BinanceTicker) {
+// 		// 使用默认处理函数显示行情数据
+// 		handling.DefaultTickerHandler(ticker)
+// 	}
+
+// 	// 启动一个新的 goroutine 来执行监控，这样不会阻塞 RPC 调用
+// 	go func() {
+// 		err := handling.MonitorPrice(req.Symbol, callback, timeout)
+// 		if err != nil {
+// 			log.Errorf(log.GRPCSys, "价格监控服务出错: %v", err)
+// 		}
+// 	}()
+
+// 	return &gctrpc.MonitorPriceResponse{
+// 		Success: true,
+// 		Message: fmt.Sprintf("已启动对 %s 的价格监控服务", req.Symbol),
+// 	}, nil
+// }

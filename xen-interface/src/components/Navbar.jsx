@@ -9,7 +9,11 @@ import {
   Container,
   useBreakpointValue, // 用于响应式文本切换
   Image,
+  IconButton,
+  useColorMode,
+  useColorModeValue,
 } from '@chakra-ui/react';
+import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 import WalletModal from './WalletModal';
 import { formatAddress } from '../utils/walletUtils';
 
@@ -46,6 +50,9 @@ const Navbar = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const [walletInfo, setWalletInfo] = useState(null);
 
+  // 获取颜色模式和切换函数
+  const { colorMode, toggleColorMode } = useColorMode();
+  
   // 动态切换按钮文本
   const buttonText = useBreakpointValue({ base: 'Connect', md: 'Connect Wallet' });
   
@@ -120,38 +127,53 @@ const Navbar = () => {
             <HStack as={'nav'} spacing={4} display={{ base: 'none', md: 'flex' }} justifyContent={'flex-start'} flex={1} ml={4}>
               <NavLink  to='/' isActive={location.pathname === '/'}>XEN</NavLink>
               <NavLink to='/xen-slots' isActive={location.pathname === '/xen-slots'}>SLOT</NavLink>
+              <NavLink to='/tokens' isActive={location.pathname === '/tokens'}>我的代币</NavLink>
             </HStack>
 
-        {/* 右侧按钮 */}
-        <Button
-            variant={walletAddress ? 'outline' : 'solid'}
-            size={{ base: 'sm', md: 'md' }}
-            height={{ base: '40px', md: '40px' }} // 统一高度为40px
-            minWidth={{ base: walletAddress ? '120px' : '82.73px', md: '120px' }} // 设置最小宽度确保内容不会挤压
-            maxWidth={{ base: '160px', md: '180px' }} // 设置最大宽度避免按钮过宽
-            px={{ base: '12px', md: '12px' }} // 水平内边距
-            py={{ base: '8px', md: '8px' }} // 垂直内边距
-            rounded='xl'
-            bg={walletAddress ? 'transparent' : 'hsl(142, 76%, 36%)'} // 连接后透明背景，未连接时绿色背景
-            border={walletAddress ? '1px solid' : 'none'}
-            borderColor={walletAddress ? 'gray.200' : 'transparent'}
-            _hover={{ 
-              bg: walletAddress ? 'gray.50' : 'hsl(142, 76%, 36%)/90', 
-              transform: 'translateY(-1px)' 
-            }}
-            color={walletAddress ? 'gray.700' : 'white'} // 连接后灰色文字，未连接时白色文字
-            boxShadow={walletAddress ? 'sm' : 'md'} // 阴影
-            fontSize={{ base: 'sm', md: 'md' }} // 字体大小
-            onClick={handleWalletConnect}
-            display="inline-flex"
-            alignItems="center"
-            justifyContent="center"
-            gap={2}
-            data-wallet-status={walletAddress ? 'connected' : 'disconnected'} // 添加数据属性用于调试
-            overflow="hidden" // 防止内容溢出
-            textOverflow="ellipsis" // 文本溢出时显示省略号
-            whiteSpace="nowrap" // 防止文本换行
-          >
+        {/* 颜色模式切换按钮 */}
+            <IconButton
+              aria-label={`切换到${colorMode === 'light' ? '暗色' : '亮色'}模式`}
+              icon={colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
+              onClick={toggleColorMode}
+              variant="ghost"
+              size={{ base: 'sm', md: 'md' }}
+              mr={2}
+              rounded="full"
+              _hover={{
+                bg: useColorModeValue('rgba(24, 201, 100, 0.08)', 'rgba(24, 201, 100, 0.15)'),
+              }}
+            />
+            
+            {/* 钱包连接按钮 */}
+            <Button
+              variant={walletAddress ? 'outline' : 'solid'}
+              size={{ base: 'sm', md: 'md' }}
+              height={{ base: '40px', md: '40px' }} // 统一高度为40px
+              minWidth={{ base: walletAddress ? '120px' : '82.73px', md: '120px' }} // 设置最小宽度确保内容不会挤压
+              maxWidth={{ base: '160px', md: '180px' }} // 设置最大宽度避免按钮过宽
+              px={{ base: '12px', md: '12px' }} // 水平内边距
+              py={{ base: '8px', md: '8px' }} // 垂直内边距
+              rounded='xl'
+              bg={walletAddress ? 'transparent' : 'hsl(142, 76%, 36%)'} // 连接后透明背景，未连接时绿色背景
+              border={walletAddress ? '1px solid' : 'none'}
+              borderColor={walletAddress ? useColorModeValue('gray.200', 'gray.600') : 'transparent'}
+              _hover={{ 
+                bg: walletAddress ? useColorModeValue('gray.50', 'gray.700') : 'hsl(142, 76%, 36%)/90', 
+                transform: 'translateY(-1px)' 
+              }}
+              color={walletAddress ? useColorModeValue('gray.700', 'gray.200') : 'white'} // 连接后灰色文字，未连接时白色文字
+              boxShadow={walletAddress ? 'sm' : 'md'} // 阴影
+              fontSize={{ base: 'sm', md: 'md' }} // 字体大小
+              onClick={handleWalletConnect}
+              display="inline-flex"
+              alignItems="center"
+              justifyContent="center"
+              gap={2}
+              data-wallet-status={walletAddress ? 'connected' : 'disconnected'} // 添加数据属性用于调试
+              overflow="hidden" // 防止内容溢出
+              textOverflow="ellipsis" // 文本溢出时显示省略号
+              whiteSpace="nowrap" // 防止文本换行
+            >
             {walletAddress ? (
               <>
                 <Image 
@@ -179,8 +201,8 @@ const Navbar = () => {
         left='0'
         right='0'
         zIndex='20'
-        bg='white'
-        borderTop='1px solid hsl(142, 76%, 36%, 0.2)' // 顶部边框为浅绿色
+        bg={useColorModeValue('white', 'gray.800')}
+        borderTop={`1px solid ${useColorModeValue('hsl(142, 76%, 36%, 0.2)', 'hsl(142, 76%, 36%, 0.3)')}`} // 顶部边框为浅绿色
         roundedTop='12px'
         shadow='sm'
         display={{ base: 'flex', md: 'none' }}

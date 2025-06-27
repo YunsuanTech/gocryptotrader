@@ -186,6 +186,45 @@
         ]
       }
     },
+    "/v1/monitor_price": {
+      "post": {
+        "operationId": "GoCryptoTraderService_MonitorPrice",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcMonitorPriceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "symbol",
+            "description": "交易对，例如 \"btcusdt\"",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timeoutSeconds",
+            "description": "监控持续时间（秒），如果为 0 则一直监控直到出错",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "GoCryptoTraderService"
+        ]
+      }
+    },
     "/v1/start_auto_trade": {
       "post": {
         "operationId": "GoCryptoTraderService_StartAutoTrade",
@@ -539,6 +578,17 @@
       "properties": {
         "tokenPrice": {
           "$ref": "#/definitions/gctrpcTokenPrice"
+        }
+      }
+    },
+    "gctrpcMonitorPriceResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
         }
       }
     },

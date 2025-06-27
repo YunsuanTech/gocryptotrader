@@ -9,17 +9,18 @@ import Footer from './components/Footer'
 // 导入页面
 import XenHome from './pages/XenHome'
 import XenSlots from './pages/XenSlots'
+import TokensPage from './pages/TokensPage'
 
 function App() {
-  const bgColor = useColorModeValue('linear-gradient(to bottom, #f8f9fd 0%, #e6f7ff 100%)', 'linear-gradient(to bottom, #1a1a2e 0%, #0d0d1a 100%)')
-  
   return (
     <Box 
       minH="100vh" 
       display="flex" 
       flexDirection="column"
-      bg={bgColor}
       backgroundAttachment="fixed"
+      bg={useColorModeValue('background.light', 'gray.900')}
+      color={useColorModeValue('gray.800', 'white')}
+      transition="background 0.3s ease, color 0.3s ease"
     >
       <Navbar />
       <Box 
@@ -32,6 +33,7 @@ function App() {
         <Routes>
           <Route path="/" element={<XenHome />} />
           <Route path="/xen-slots" element={<XenSlots />} />
+          <Route path="/tokens" element={<TokensPage />} />
         </Routes>
       </Box>
       <Footer />

@@ -47,11 +47,9 @@ import { ChevronDownIcon, CheckIcon, RepeatIcon, TimeIcon, InfoIcon } from '@cha
 const XenSlots = () => {
   // 使用Chakra UI的颜色模式
   const bgColor = useColorModeValue('white', 'gray.800');
-  const secondaryBgColor = useColorModeValue('gray.50', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.600', 'gray.400');
   const accentColor = 'hsl(142, 76%, 36%)';
-  const accentColorLight = 'rgba(24, 201, 100, 0.1)';
   
   // 状态管理
   const [activeTab, setActiveTab] = useState(0);

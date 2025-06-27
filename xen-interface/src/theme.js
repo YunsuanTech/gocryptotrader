@@ -16,7 +16,8 @@ const colors = {
   },
   // 背景色
   background: {
-
+    light: '#f8f9fd', // 亮色模式背景色
+    dark: '#1a1a2e', // 暗色模式背景色
     card: {
       light: 'transparent', // 透明容器
       dark: 'transparent'
@@ -175,6 +176,8 @@ const styles = {
 const config = {
   initialColorMode: 'light',
   useSystemColorMode: false,
+  cssVarPrefix: 'xen',
+  disableTransitionOnChange: false, // 启用颜色模式切换时的过渡效果
 }
 
 // 创建自定义主题

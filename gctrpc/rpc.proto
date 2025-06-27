@@ -158,6 +158,16 @@ message BuySOLTokenResponse {
   string message = 2;
 }
 
+message MonitorPriceRequest {
+  string symbol = 1;           // 交易对，例如 "btcusdt"
+  int64 timeout_seconds = 2;   // 监控持续时间（秒），如果为 0 则一直监控直到出错
+}
+
+message MonitorPriceResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service GoCryptoTraderService {
   rpc GetInfo(GetInfoRequest) returns (GetInfoResponse) {
     option (google.api.http) = {get: "/v1/getinfo"};
@@ -213,5 +223,9 @@ service GoCryptoTraderService {
 
   rpc StopSignalMonitor(StopSignalMonitorRequest) returns (StopSignalMonitorResponse) {
     option (google.api.http) = {post: "/v1/stop_signal_monitor"};
+  }
+
+  rpc MonitorPrice(MonitorPriceRequest) returns (MonitorPriceResponse) {
+    option (google.api.http) = {post: "/v1/monitor_price"};
   }
 }

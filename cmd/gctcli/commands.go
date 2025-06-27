@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gocryptotrader/gctrpc"
 
 	"github.com/urfave/cli/v2"
@@ -8,6 +9,22 @@ import (
 
 var startTime, endTime, orderingDirection string
 var limit int
+
+var monitorPriceCommand = &cli.Command{
+	Name:   "monitorprice",
+	Usage:  "监控指定交易对的价格",
+	Action: monitorPrice,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "symbol",
+			Usage: "交易对，例如 btcusdt",
+		},
+		&cli.Int64Flag{
+			Name:  "timeout",
+			Usage: "监控持续时间（秒），如果为 0 则一直监控直到出错",
+		},
+	},
+}
 
 var tradeTokenBySignalCommand = &cli.Command{
 	Name:   "tradetokenbysignal",
@@ -323,6 +340,36 @@ func tradeTokenBySignal(c *cli.Context) error {
 		&gctrpc.TradeTokenBySignalRequest{
 			TokenAddress: tokenAddress,
 			BuyPrice:     buyPrice,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	jsonOutput(result)
+	return nil
+}
+
+func monitorPrice(c *cli.Context) error {
+	conn, cancel, err := setupClient(c)
+	if err != nil {
+		return err
+	}
+	defer closeConn(conn, cancel)
+
+	symbol := c.String("symbol")
+	timeoutSeconds := c.Int64("timeout")
+
+	if symbol == "" {
+		return fmt.Errorf("交易对不能为空")
+	}
+
+	client := gctrpc.NewGoCryptoTraderServiceClient(conn)
+	result, err := client.MonitorPrice(c.Context,
+		&gctrpc.MonitorPriceRequest{
+			Symbol:         symbol,
+			TimeoutSeconds: timeoutSeconds,
 		},
 	)
 
