@@ -20,18 +20,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// BSC 配置常量
-const (
-	BSC_RPC_URL         = "https://bsc-dataseed.binance.org/"
-	PANCAKE_ROUTER_ADDR = "0x10ED43C718714eb63d5aA57B78B54704E256024E" // PancakeSwap V2 Router
-	WBNB_ADDRESS        = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"
-	BUSD_ADDRESS        = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56"
-	USDT_ADDRESS        = "0x55d398326f99059fF775485246999027B3197955"
-	CAKE_ADDRESS        = "0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82"
-
-	// 默认值
-	DefaultAmountIn = 1.0 // 默认输入金额为1个代币
-)
+// PancakeSwap specific constants (using common constants from constants.go)
+// Note: Common constants like BSCRPCURL, PancakeRouterAddress, WBNBAddress, BUSDAddress,
+// USDTAddress, CAKEAddress, WETHAddress, DefaultAmountIn are now defined in constants.go
 
 // PancakeRouter ABI 片段 (仅包含 getAmountsOut 函数)
 const pancakeRouterABI = `[{
@@ -47,10 +38,12 @@ const pancakeRouterABI = `[{
 
 // 代币精度映射 (已知代币)
 var tokenDecimals = map[string]int{
-	strings.ToLower(WBNB_ADDRESS): 18,
-	strings.ToLower(BUSD_ADDRESS): 18,
-	strings.ToLower(USDT_ADDRESS): 18,
-	strings.ToLower(CAKE_ADDRESS): 18,
+	strings.ToLower(WBNBAddress):    18,
+	strings.ToLower(BUSDAddress):    18,
+	strings.ToLower(USDTAddress):    18,
+	strings.ToLower(USDCBSCAddress): 18, // USDC在BSC上是18位小数
+	strings.ToLower(CAKEAddress):    18,
+	strings.ToLower(WETHAddress):    18,
 }
 
 // PancakeTokenPrice 表示PancakeSwap代币价格信息
@@ -75,71 +68,72 @@ func GetPancakeTokenPrice(tokenAddress string, symbol string) (*PancakeTokenPric
 	}
 
 	// 初始化以太坊客户端
-	client, err := ethclient.Dial(BSC_RPC_URL)
+	client, err := ethclient.Dial(BSCRPCURL)
 	if err != nil {
 		return nil, fmt.Errorf("连接BSC节点失败: %v", err)
 	}
 	defer client.Close()
 
 	// 如果代币是BNB本身，获取BNB对USDT的价格
-	if strings.EqualFold(tokenAddress, WBNB_ADDRESS) {
+	if strings.EqualFold(tokenAddress, WBNBAddress) {
 		return getPancakeBNBPrice(client, symbol)
 	}
 
-	// 获取代币对BUSD的价格
-	usdPrice, err := getTokenPrice(client, tokenAddress, BUSD_ADDRESS, DefaultAmountIn)
+	// 优先使用USDT获取代币价格（流动性最稳定）
+	usdPrice, err := getTokenPrice(client, tokenAddress, USDTAddress, DefaultAmountIn)
 	if err != nil {
-		// 如果BUSD路径失败，尝试USDT路径
-		usdPrice, err = getTokenPrice(client, tokenAddress, USDT_ADDRESS, DefaultAmountIn)
+		// 如果USDT路径失败，尝试USDC路径
+		usdPrice, err = getTokenPrice(client, tokenAddress, USDCBSCAddress, DefaultAmountIn)
 		if err != nil {
-			return nil, fmt.Errorf("获取USD价格失败: %v", err)
+			// 如果USDC路径也失败，尝试BUSD路径（向后兼容）
+			usdPrice, err = getTokenPrice(client, tokenAddress, BUSDAddress, DefaultAmountIn)
+			if err != nil {
+				return nil, fmt.Errorf("获取USD价格失败: %v", err)
+			}
 		}
 	}
 
-	// 获取代币对BNB的价格
-	bnbPrice, err := getTokenPrice(client, tokenAddress, WBNB_ADDRESS, DefaultAmountIn)
-	if err != nil {
-		log.Printf("获取BNB价格失败: %v，将使用0作为默认值", err)
-		bnbPrice = 0
-	}
-
-	// 保存到数据库
-	SavePancakePriceToDb(tokenAddress, symbol, usdPrice, bnbPrice)
+	// 保存到数据库（不再查询BNB价格）
+	SavePancakePriceToDb(tokenAddress, symbol, usdPrice, 0)
 
 	return &PancakeTokenPrice{
 		Symbol:     symbol,
 		Address:    tokenAddress,
 		USDPrice:   usdPrice,
-		BNBPrice:   bnbPrice,
+		BNBPrice:   0, // 不再提供BNB价格
 		LastUpdate: time.Now(),
 	}, nil
 }
 
 // getPancakeBNBPrice 获取BNB在PancakeSwap上的价格
 func getPancakeBNBPrice(client *ethclient.Client, symbol string) (*PancakeTokenPrice, error) {
-	// 获取BNB对USDT的价格
-	usdPrice, err := getTokenPrice(client, WBNB_ADDRESS, USDT_ADDRESS, DefaultAmountIn)
+	// 优先使用USDT获取BNB价格（流动性最稳定）
+	usdPrice, err := getTokenPrice(client, WBNBAddress, USDTAddress, DefaultAmountIn)
 	if err != nil {
-		// 如果USDT路径失败，尝试BUSD路径
-		usdPrice, err = getTokenPrice(client, WBNB_ADDRESS, BUSD_ADDRESS, DefaultAmountIn)
+		// 如果USDT路径失败，尝试USDC路径
+		usdPrice, err = getTokenPrice(client, WBNBAddress, USDCBSCAddress, DefaultAmountIn)
 		if err != nil {
-			return nil, fmt.Errorf("获取BNB价格失败: %v", err)
+			// 如果USDC路径也失败，尝试BUSD路径（向后兼容）
+			usdPrice, err = getTokenPrice(client, WBNBAddress, BUSDAddress, DefaultAmountIn)
+			if err != nil {
+				return nil, fmt.Errorf("获取BNB价格失败: %v", err)
+			}
 		}
 	}
 
 	// 保存到数据库
-	SavePancakePriceToDb(WBNB_ADDRESS, symbol, usdPrice, 1.0)
+	SavePancakePriceToDb(WBNBAddress, symbol, usdPrice, 0)
 
 	return &PancakeTokenPrice{
 		Symbol:     symbol,
-		Address:    WBNB_ADDRESS,
+		Address:    WBNBAddress,
 		USDPrice:   usdPrice,
-		BNBPrice:   1.0, // 1 BNB = 1 BNB
+		BNBPrice:   0, // 不再提供BNB价格
 		LastUpdate: time.Now(),
 	}, nil
 }
 
-// getTokenPrice 获取代币价格
+// getTokenPrice 获取代币价格 (返回单个代币的价格)
 func getTokenPrice(client *ethclient.Client, tokenIn, tokenOut string, amount float64) (float64, error) {
 	// 1. 获取代币精度
 	inDecimals, err := getTokenDecimals(client, tokenIn)
@@ -155,7 +149,7 @@ func getTokenPrice(client *ethclient.Client, tokenIn, tokenOut string, amount fl
 	// 2. 转换输入金额为wei单位
 	amountInWei := toWei(amount, inDecimals)
 
-	// 3. 准备调用参数
+	// 3. 首先尝试直接路由
 	path := []common.Address{
 		common.HexToAddress(tokenIn),
 		common.HexToAddress(tokenOut),
@@ -164,16 +158,34 @@ func getTokenPrice(client *ethclient.Client, tokenIn, tokenOut string, amount fl
 	// 4. 调用合约
 	amountsOut, err := callGetAmountsOut(client, amountInWei, path)
 	if err != nil {
-		return 0, fmt.Errorf("合约调用失败: %w", err)
+		// 如果直接路由失败，且不是WBNB相关的交易，尝试通过WBNB路由
+		if !strings.EqualFold(tokenIn, WBNBAddress) && !strings.EqualFold(tokenOut, WBNBAddress) {
+			// 尝试通过WBNB的多跳路由: tokenIn -> WBNB -> tokenOut
+			pathWithWBNB := []common.Address{
+				common.HexToAddress(tokenIn),
+				common.HexToAddress(WBNBAddress),
+				common.HexToAddress(tokenOut),
+			}
+			amountsOut, err = callGetAmountsOut(client, amountInWei, pathWithWBNB)
+			if err != nil {
+				return 0, fmt.Errorf("合约调用失败(直接路由和WBNB路由都失败): %w", err)
+			}
+		} else {
+			return 0, fmt.Errorf("合约调用失败: %w", err)
+		}
 	}
 
 	// 5. 转换输出金额为可读格式
 	if len(amountsOut) < 2 {
 		return 0, fmt.Errorf("无效的输出数量")
 	}
-	amountOut := fromWei(amountsOut[1], outDecimals)
+	// 使用最后一个金额（对于多跳路由，这是最终输出金额）
+	amountOut := fromWei(amountsOut[len(amountsOut)-1], outDecimals)
 
-	return amountOut, nil
+	// 计算单个代币的价格（除以输入的代币数量）
+	pricePerToken := amountOut / amount
+
+	return pricePerToken, nil
 }
 
 // callGetAmountsOut 调用getAmountsOut合约方法
@@ -191,7 +203,7 @@ func callGetAmountsOut(client *ethclient.Client, amountIn *big.Int, path []commo
 	}
 
 	// 创建调用消息
-	routerAddr := common.HexToAddress(PANCAKE_ROUTER_ADDR)
+	routerAddr := common.HexToAddress(PancakeRouterAddress)
 	callMsg := ethereum.CallMsg{
 		To:   &routerAddr,
 		Data: data,
@@ -321,15 +333,15 @@ func MonitorPancakePrice(tokenAddress string, symbol string, interval time.Durat
 // MonitorMultipleTokens 同时监控多个代币的价格
 func MonitorMultipleTokens(tokens []TokenConfig, interval time.Duration) chan struct{} {
 	log.Printf("开始监控 %d 个代币在 PancakeSwap 上的价格，间隔: %v", len(tokens), interval)
-	
+
 	// 创建一个全局停止信号通道
 	stopCh := make(chan struct{})
-	
+
 	// 为每个代币启动一个监控协程
 	for _, token := range tokens {
 		go MonitorPancakePrice(token.Address, token.Symbol, interval, stopCh)
 	}
-	
+
 	return stopCh
 }
 
@@ -337,33 +349,33 @@ func MonitorMultipleTokens(tokens []TokenConfig, interval time.Duration) chan st
 func PancakeSwapExample() {
 	// 示例1: 获取单个代币价格
 	log.Println("示例1: 获取CAKE代币价格")
-	cakePrice, err := GetPancakeTokenPrice(CAKE_ADDRESS, "CAKE")
+	cakePrice, err := GetPancakeTokenPrice(CAKEAddress, "CAKE")
 	if err != nil {
 		log.Printf("获取CAKE价格失败: %v\n", err)
 	} else {
 		log.Printf("CAKE价格: $%.4f (%.8f BNB)\n", cakePrice.USDPrice, cakePrice.BNBPrice)
 	}
-	
+
 	// 示例2: 获取BNB价格
 	log.Println("示例2: 获取BNB价格")
-	bnbPrice, err := GetPancakeTokenPrice(WBNB_ADDRESS, "BNB")
+	bnbPrice, err := GetPancakeTokenPrice(WBNBAddress, "BNB")
 	if err != nil {
 		log.Printf("获取BNB价格失败: %v\n", err)
 	} else {
 		log.Printf("BNB价格: $%.2f\n", bnbPrice.USDPrice)
 	}
-	
+
 	// 示例3: 监控多个代币价格
 	log.Println("示例3: 监控多个代币价格")
 	tokens := []TokenConfig{
-		{Symbol: "BNB", Address: WBNB_ADDRESS},
-		{Symbol: "CAKE", Address: CAKE_ADDRESS},
-		{Symbol: "BUSD", Address: BUSD_ADDRESS},
+		{Symbol: "BNB", Address: WBNBAddress},
+		{Symbol: "CAKE", Address: CAKEAddress},
+		{Symbol: "BUSD", Address: BUSDAddress},
 	}
-	
+
 	// 每30秒更新一次价格
 	stopCh := MonitorMultipleTokens(tokens, 30*time.Second)
-	
+
 	// 运行5分钟后停止
 	log.Println("将在5分钟后停止监控")
 	time.Sleep(5 * time.Minute)
@@ -441,7 +453,7 @@ func SavePancakePriceToDb(tokenAddress string, symbol string, usdPrice float64, 
 
 	// 创建 MarketData 对象
 	marketData := &sqlite3.MarketData{
-		ExchangeID:    3, // 假设 PancakeSwap 的 exchange_id 为 3，实际应该从配置或数据库中获取
+		ExchangeID:    3,                    // 假设 PancakeSwap 的 exchange_id 为 3，实际应该从配置或数据库中获取
 		TradingPairID: int64(tradingPairID), // 使用货币ID作为交易对ID
 		Timestamp:     time.Now(),
 		LastPrice:     usdPrice,

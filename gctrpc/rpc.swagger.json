@@ -218,6 +218,20 @@
             "required": false,
             "type": "string",
             "format": "int64"
+          },
+          {
+            "name": "tokenAddress",
+            "description": "代币合约地址",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "coingeckoId",
+            "description": "CoinGecko ID",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

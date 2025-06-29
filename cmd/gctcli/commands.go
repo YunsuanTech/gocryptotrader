@@ -23,6 +23,14 @@ var monitorPriceCommand = &cli.Command{
 			Name:  "timeout",
 			Usage: "监控持续时间（秒），如果为 0 则一直监控直到出错",
 		},
+		&cli.StringFlag{
+			Name:  "token_address",
+			Usage: "代币合约地址",
+		},
+		&cli.StringFlag{
+			Name:  "coingecko_id",
+			Usage: "CoinGecko ID",
+		},
 	},
 }
 
@@ -360,6 +368,8 @@ func monitorPrice(c *cli.Context) error {
 
 	symbol := c.String("symbol")
 	timeoutSeconds := c.Int64("timeout")
+	tokenAddress := c.String("token_address")
+	coingeckoID := c.String("coingecko_id")
 
 	if symbol == "" {
 		return fmt.Errorf("交易对不能为空")
@@ -370,6 +380,8 @@ func monitorPrice(c *cli.Context) error {
 		&gctrpc.MonitorPriceRequest{
 			Symbol:         symbol,
 			TimeoutSeconds: timeoutSeconds,
+			TokenAddress:   tokenAddress,
+			CoingeckoId:    coingeckoID,
 		},
 	)
 

@@ -8,8 +8,8 @@ import (
 	"gocryptotrader/common/crypto"
 	"gocryptotrader/common/forward"
 
+	"gocryptotrader/exchanges/handling"
 	"gocryptotrader/exchanges/request"
-
 	"gocryptotrader/exchanges/token"
 	"gocryptotrader/log"
 
@@ -655,37 +655,69 @@ func (s *RPCServer) StopSignalMonitor(ctx context.Context, req *gctrpc.StopSigna
 }
 
 // // MonitorPrice 实现价格监控服务
-// func (s *RPCServer) MonitorPrice(ctx context.Context, req *gctrpc.MonitorPriceRequest) (*gctrpc.MonitorPriceResponse, error) {
-// 	if req == nil {
-// 		return nil, errNilRequestData
-// 	}
+func (s *RPCServer) MonitorPrice(ctx context.Context, req *gctrpc.MonitorPriceRequest) (*gctrpc.MonitorPriceResponse, error) {
+	if req == nil {
+		return nil, errNilRequestData
+	}
 
-// 	if req.Symbol == "" {
-// 		return nil, errors.New("交易对不能为空")
-// 	}
+	if req.Symbol == "" {
+		return nil, errors.New("交易对不能为空")
+	}
 
-// 	// 设置超时时间
-// 	var timeout time.Duration
-// 	if req.TimeoutSeconds > 0 {
-// 		timeout = time.Duration(req.TimeoutSeconds) * time.Second
-// 	}
+	// 使用 GetMultiExchangeTokenPrices 获取所有交易所的价格
+	priceInfo, err := handling.GetMultiExchangeTokenPrices(req.Symbol, req.TokenAddress, req.CoingeckoId)
+	if err != nil {
+		return &gctrpc.MonitorPriceResponse{
+			Success: false,
+			Message: fmt.Sprintf("获取 %s 的价格失败: %v", req.Symbol, err),
+		}, nil
+	}
 
-// 	// 创建一个自定义回调函数，用于处理行情数据并根据需要保存到数据库
-// 	callback := func(ticker handling.BinanceTicker) {
-// 		// 使用默认处理函数显示行情数据
-// 		handling.DefaultTickerHandler(ticker)
-// 	}
+	// 构建价格信息消息
+	message := fmt.Sprintf("代币 %s 的多交易所价格信息:\n", req.Symbol) +
+		fmt.Sprintf("查询时间: %s\n", priceInfo.Timestamp.Format("2006-01-02 15:04:05")) +
+		"各交易所价格:\n"
 
-// 	// 启动一个新的 goroutine 来执行监控，这样不会阻塞 RPC 调用
-// 	go func() {
-// 		err := handling.MonitorPrice(req.Symbol, callback, timeout)
-// 		if err != nil {
-// 			log.Errorf(log.GRPCSys, "价格监控服务出错: %v", err)
-// 		}
-// 	}()
+	// 添加每个交易所的价格
+	for exchange, price := range priceInfo.USDPrices {
+		message += fmt.Sprintf("  %s: $%.6f\n", exchange, price)
+	}
 
-// 	return &gctrpc.MonitorPriceResponse{
-// 		Success: true,
-// 		Message: fmt.Sprintf("已启动对 %s 的价格监控服务", req.Symbol),
-// 	}, nil
-// }
+	message += fmt.Sprintf("\n共获取到 %d 个交易所的价格数据", len(priceInfo.USDPrices))
+
+	// 如果设置了超时时间，启动定时监控
+	if req.TimeoutSeconds > 0 {
+		timeout := time.Duration(req.TimeoutSeconds) * time.Second
+		go func() {
+			ticker := time.NewTicker(time.Second * 10) // 每10秒更新一次价格
+			defer ticker.Stop()
+
+			timer := time.NewTimer(timeout)
+			defer timer.Stop()
+
+			for {
+				select {
+				case <-ticker.C:
+					// 更新价格
+					priceInfo, err := handling.GetMultiExchangeTokenPrices(req.Symbol, req.TokenAddress, req.CoingeckoId)
+					if err != nil {
+						log.Errorf(log.GRPCSys, "获取 %s 的价格失败: %v", req.Symbol, err)
+						continue
+					}
+					// 打印更新的价格信息
+					log.Debugf(log.GRPCSys, "代币 %s 的最新价格信息 - 共 %d 个交易所",
+						req.Symbol, len(priceInfo.USDPrices))
+				case <-timer.C:
+					log.Debugf(log.GRPCSys, "代币 %s 的价格监控已完成", req.Symbol)
+					return
+				}
+			}
+		}()
+		message += fmt.Sprintf("\n\n已启动价格监控服务，持续时间: %v", timeout)
+	}
+
+	return &gctrpc.MonitorPriceResponse{
+		Success: true,
+		Message: message,
+	}, nil
+}

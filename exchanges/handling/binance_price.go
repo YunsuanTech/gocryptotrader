@@ -16,11 +16,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Binance API URL constants
-const (
-	BinanceWSBaseURL  = "wss://stream.binance.com"
-	BinanceTickerPath = "/ws/%s@ticker"
-)
+// Binance specific constants (using common constants from constants.go)
+// Note: Common constants like BinanceWSBaseURL are now defined in constants.go
 
 // 自定义类型处理数字/字符串混合值
 type FlexString string

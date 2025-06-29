@@ -1,6 +1,7 @@
 package handling
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,30 +10,19 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
-	"context"
 	"gocryptotrader/database/models/sqlite3"
 	currency "gocryptotrader/database/repository/currency"
 	marketdata "gocryptotrader/database/repository/market_data"
 )
 
-// GMGN API URL constants
-const (
-	GMGNBaseURL       = "https://gmgn.ai"
-	SwapRouteEndpoint = "/defi/router/v1/sol/tx/get_swap_route"
-
-	// Token address constants
-	SolAddress  = "So11111111111111111111111111111111111111112"
-	USDCAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-
-	// Default values
-	DefaultFromAddress = "vp4ppQ97v9aAeAbBBEgnxdyxjjzWaKhorjCRHewZ7rR"
-	DefaultSlippage    = 10.0
-	DefaultFee         = 0.006
-	DefaultSolAmount   = "1000000000" // 1 SOL in lamports
-	DefaultTokenAmount = "1000000"    // A small amount of token
-)
+// GMGN specific constants (using common constants from constants.go)
+// Note: Common constants like GMGNBaseURL, SwapRouteEndpoint, ExactInEndpoint, ExactOutEndpoint,
+// SOLAddress, USDAddress, ETHAddress, WETHAddress, USDCETHAddress, DefaultSlippage, DefaultFee,
+// DefaultSOLAmount, DefaultTokenAmount, DefaultETHAmount, DefaultETHFromAddress, DefaultSOLFromAddress
+// are now defined in constants.go
 
 // SwapRouteParams represents the parameters for the swap route API
 type SwapRouteParams struct {
@@ -113,7 +103,69 @@ type GMGNTokenPrice struct {
 	Symbol     string    `json:"symbol"`
 	USDPrice   float64   `json:"usd_price"`
 	SOLPrice   float64   `json:"sol_price"`
+	Chain      string    `json:"chain"`
 	LastUpdate time.Time `json:"last_update"`
+}
+
+// MultiChainRouteParams represents parameters for multi-chain route API
+type MultiChainRouteParams struct {
+	TokenInChain    string `json:"token_in_chain"`
+	TokenOutChain   string `json:"token_out_chain"`
+	TokenInAddress  string `json:"token_in_address"`
+	TokenOutAddress string `json:"token_out_address"`
+	InAmount        string `json:"in_amount,omitempty"`
+	OutAmount       string `json:"out_amount,omitempty"`
+	Src             string `json:"src,omitempty"`
+}
+
+// RouteStep represents a step in the route
+type RouteStep struct {
+	ID   int    `json:"id"`
+	Type string `json:"type"`
+	Tool string `json:"tool"`
+}
+
+// Route represents a single route in the multi-chain response
+type Route struct {
+	ChainID            int         `json:"chain_id"`
+	To                 string      `json:"to"`
+	AmountIn           string      `json:"amount_in"`
+	AmountOut          string      `json:"amount_out"`
+	InputTokenAddress  string      `json:"input_token_address"`
+	OutputTokenAddress string      `json:"output_token_address"`
+	Type               string      `json:"type"`
+	Path               []string    `json:"path"`
+	PoolAddress        interface{} `json:"pool_address"`    // Can be string or []string
+	FactoryAddress     interface{} `json:"factory_address"` // Can be string or []string
+	Fee                interface{} `json:"fee"`             // Can be int or []int
+	Steps              []RouteStep `json:"steps"`
+	TokenInUSDPrice    string      `json:"token_in_usd_price"`
+	AmountInUSD        string      `json:"amount_in_usd"`
+	TokenOutUSDPrice   string      `json:"token_out_usd_price"`
+	AmountOutUSD       string      `json:"amount_out_usd"`
+	Value              string      `json:"value"`
+	PriceImpact        string      `json:"price_impact"`
+	GasLimit           string      `json:"gas_limit"`
+}
+
+// Volatilities represents price volatility information
+type Volatilities struct {
+	TokenIn  int  `json:"token_in"`
+	TokenOut int  `json:"token_out"`
+	IsFomo   bool `json:"is_fomo"`
+}
+
+// MultiChainRouteData represents the data in multi-chain route response
+type MultiChainRouteData struct {
+	Routes       []Route      `json:"routes"`
+	Volatilities Volatilities `json:"volatilities"`
+}
+
+// MultiChainRouteResponse represents the response from multi-chain route API
+type MultiChainRouteResponse struct {
+	Code int                 `json:"code"`
+	Msg  string              `json:"msg"`
+	Data MultiChainRouteData `json:"data"`
 }
 
 // parseAmounts parses the amount values from the API response
@@ -149,75 +201,40 @@ func createDefaultParams(tokenInAddress, tokenOutAddress, inAmount string) SwapR
 		TokenInAddress:  tokenInAddress,
 		TokenOutAddress: tokenOutAddress,
 		InAmount:        inAmount,
-		FromAddress:     DefaultFromAddress,
+		FromAddress:     DefaultSOLFromAddress,
 		Slippage:        DefaultSlippage,
 		Fee:             DefaultFee,
 		IsAntiMEV:       false,
 	}
 }
 
-// GetGMGNTokenPrice fetches the price of a token in USD and SOL
+// GetGMGNTokenPrice fetches the price of a token across multiple chains (SOL/ETH/Base/BSC)
+// It tries each chain in order until a successful response is found
 func GetGMGNTokenPrice(tokenAddress string, symbol string) (*GMGNTokenPrice, error) {
 	if tokenAddress == "" {
 		return nil, fmt.Errorf("token address cannot be empty")
 	}
 
-	// If the token is SOL itself, return a simple response
-	if tokenAddress == SolAddress {
-		return getGMGNSOLPrice(symbol)
+	// Define the chains to try in order
+	chains := []string{"sol", "eth", "base", "bsc"}
+
+	// Try each chain until we get a successful response
+	for _, chain := range chains {
+		price, err := getTokenPriceOnChain(tokenAddress, symbol, chain)
+		if err == nil {
+			return price, nil
+		}
+		// Log the error but continue to next chain
+		log.Printf("Failed to get price for %s on %s chain: %v", symbol, chain, err)
 	}
 
-	// Default parameters for the swap route API
-	params := createDefaultParams(SolAddress, tokenAddress, DefaultSolAmount)
-
-	// Get the price using the swap route API
-	response, err := fetchSwapRoute(params)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse amounts from response
-	_, amountOutUSD, inAmount, outAmount, err := parseAmounts(response)
-	if err != nil {
-		return nil, err
-	}
-
-	// Calculate the SOL price (how many tokens per 1 SOL)
-	// Adjust for decimals
-	inAmountInSOL := inAmount / math.Pow10(response.Data.Quote.InDecimals)
-	outAmountInTokens := outAmount / math.Pow10(response.Data.Quote.OutDecimals)
-
-	// Avoid division by zero
-	if inAmountInSOL == 0 {
-		return nil, fmt.Errorf("invalid calculation: inAmountInSOL is zero")
-	}
-
-	solPrice := outAmountInTokens / inAmountInSOL
-
-	// Calculate the USD price (USD per token)
-	// Avoid division by zero
-	if outAmountInTokens == 0 {
-		return nil, fmt.Errorf("invalid calculation: outAmountInTokens is zero")
-	}
-
-	usdPrice := amountOutUSD / outAmountInTokens
-
-	// 保存到数据库
-	SaveGMGNPriceToDb(tokenAddress, symbol, usdPrice, solPrice)
-
-	return &GMGNTokenPrice{
-		Address:    tokenAddress,
-		Symbol:     symbol,
-		USDPrice:   usdPrice,
-		SOLPrice:   solPrice,
-		LastUpdate: time.Now(),
-	}, nil
+	return nil, fmt.Errorf("failed to get price for token %s on all supported chains", symbol)
 }
 
 // getGMGNSOLPrice fetches the price of SOL in USD
 func getGMGNSOLPrice(symbol string) (*GMGNTokenPrice, error) {
 	// Default parameters for the swap route API
-	params := createDefaultParams(SolAddress, USDCAddress, DefaultSolAmount)
+	params := createDefaultParams(SOLAddress, USDAddress, DefaultSOLAmount)
 
 	// Get the price using the swap route API
 	response, err := fetchSwapRoute(params)
@@ -232,16 +249,51 @@ func getGMGNSOLPrice(symbol string) (*GMGNTokenPrice, error) {
 	}
 
 	// 保存到数据库
-	SaveGMGNPriceToDb(SolAddress, symbol, amountInUSD, 1.0)
+	SaveGMGNPriceToDb(SOLAddress, symbol, amountInUSD, 1.0, "sol")
 
 	// SOL price in USD is directly available
 	return &GMGNTokenPrice{
-		Address:    SolAddress,
+		Address:    SOLAddress,
 		Symbol:     symbol,
 		USDPrice:   amountInUSD,
 		SOLPrice:   1.0, // 1 SOL = 1 SOL
+		Chain:      "sol",
 		LastUpdate: time.Now(),
 	}, nil
+}
+
+// makeHTTPRequest makes a generic HTTP GET request and returns the response body
+func makeHTTPRequest(url string, timeout time.Duration) ([]byte, error) {
+	client := &http.Client{Timeout: timeout}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set common headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+	req.Header.Set("Accept", "application/json")
+
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check status code
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status code: %d", resp.StatusCode)
+	}
+
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return body, nil
 }
 
 // fetchSwapRoute makes a request to the GMGN API to get the swap route
@@ -282,32 +334,10 @@ func fetchSwapRoute(params SwapRouteParams) (*SwapRouteResponse, error) {
 
 	baseURL.RawQuery = query.Encode()
 
-	// Create a new HTTP client and request
-	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest(http.MethodGet, baseURL.String(), nil)
+	// Make HTTP request
+	body, err := makeHTTPRequest(baseURL.String(), 10*time.Second)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send the request
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	// Check if the response status code is not 200 OK
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned non-200 status code: %d, body: %s", resp.StatusCode, string(body))
+		return nil, err
 	}
 
 	// Parse the response
@@ -325,7 +355,248 @@ func fetchSwapRoute(params SwapRouteParams) (*SwapRouteResponse, error) {
 }
 
 // SaveGMGNPriceToDb 将GMGN价格数据保存到数据库
-func SaveGMGNPriceToDb(tokenAddress string, symbol string, usdPrice float64, solPrice float64) {
+// fetchMultiChainRoute fetches route data from multi-chain API
+func fetchMultiChainRoute(params MultiChainRouteParams, exactIn bool) (*MultiChainRouteResponse, error) {
+	// Choose endpoint based on exactIn parameter
+	endpoint := ExactInEndpoint
+	if !exactIn {
+		endpoint = ExactOutEndpoint
+	}
+
+	// Build URL with query parameters
+	baseURL, err := url.Parse(GMGNBaseURL + endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
+	}
+
+	// Add query parameters
+	q := baseURL.Query()
+	q.Add("token_in_chain", params.TokenInChain)
+	q.Add("token_out_chain", params.TokenOutChain)
+	q.Add("token_in_address", params.TokenInAddress)
+	q.Add("token_out_address", params.TokenOutAddress)
+	if exactIn && params.InAmount != "" {
+		q.Add("in_amount", params.InAmount)
+	}
+	if !exactIn && params.OutAmount != "" {
+		q.Add("out_amount", params.OutAmount)
+	}
+	if params.Src != "" {
+		q.Add("src", params.Src)
+	}
+	baseURL.RawQuery = q.Encode()
+
+	// Make HTTP request
+	body, err := makeHTTPRequest(baseURL.String(), 30*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse response
+	var response MultiChainRouteResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON response: %w", err)
+	}
+
+	// Check API response code
+	if response.Code != 0 {
+		return nil, fmt.Errorf("API error: %s", response.Msg)
+	}
+
+	return &response, nil
+}
+
+// getBaseCurrencyAddress returns the base currency address for a given chain
+func getBaseCurrencyAddress(chain string) (string, error) {
+	switch strings.ToLower(chain) {
+	case "eth":
+		return WETHAddress, nil
+	case "base":
+		return ETHAddress, nil // Base uses ETH as native currency
+	case "bsc":
+		return WBNBAddress, nil
+	default:
+		return "", fmt.Errorf("unsupported chain: %s. Supported chains: eth, base, bsc", chain)
+	}
+}
+
+// GetMultiChainTokenPrice fetches token price on ETH/Base/BSC chains
+func GetMultiChainTokenPrice(tokenAddress, symbol, chain string) (*GMGNTokenPrice, error) {
+	if tokenAddress == "" {
+		return nil, fmt.Errorf("token address cannot be empty")
+	}
+	if chain == "" {
+		return nil, fmt.Errorf("chain cannot be empty")
+	}
+
+	// Special handling for WETH - use ETH price since they are 1:1
+	if strings.EqualFold(tokenAddress, WETHAddress) && strings.ToLower(chain) == "eth" {
+		return getETHPrice(symbol)
+	}
+
+	// Get base currency address for the chain
+	baseCurrencyAddress, err := getBaseCurrencyAddress(chain)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create parameters for token to base currency (ETH/BNB)
+	params := MultiChainRouteParams{
+		TokenInChain:    strings.ToLower(chain),
+		TokenOutChain:   strings.ToLower(chain),
+		TokenInAddress:  tokenAddress,
+		TokenOutAddress: baseCurrencyAddress,
+		InAmount:        DefaultTokenAmount,
+		Src:             "gmgn",
+	}
+
+	// Fetch route data
+	response, err := fetchMultiChainRoute(params, true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch route data: %w", err)
+	}
+
+	if len(response.Data.Routes) == 0 {
+		return nil, fmt.Errorf("no routes found for token %s on chain %s", tokenAddress, chain)
+	}
+
+	// Use the first route
+	route := response.Data.Routes[0]
+
+	// Parse amounts
+	amountIn, err := strconv.ParseFloat(route.AmountIn, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse amount_in: %w", err)
+	}
+
+	amountOut, err := strconv.ParseFloat(route.AmountOut, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse amount_out: %w", err)
+	}
+
+	// Parse USD prices
+	tokenInUSDPrice, err := strconv.ParseFloat(route.TokenInUSDPrice, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token_in_usd_price: %w", err)
+	}
+
+	tokenOutUSDPrice, err := strconv.ParseFloat(route.TokenOutUSDPrice, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token_out_usd_price: %w", err)
+	}
+
+	// Calculate USD price
+	var usdPrice float64
+
+	// USD price calculation
+	if tokenInUSDPrice > 0 {
+		usdPrice = tokenInUSDPrice
+	} else if tokenOutUSDPrice > 0 && amountOut > 0 {
+		// Calculate based on output token USD price
+		usdPrice = (tokenOutUSDPrice * amountOut) / amountIn
+	}
+
+	// 保存到数据库
+	SaveGMGNPriceToDb(tokenAddress, symbol, usdPrice, 0, strings.ToLower(chain))
+
+	return &GMGNTokenPrice{
+		Address:    tokenAddress,
+		Symbol:     symbol,
+		USDPrice:   usdPrice,
+		SOLPrice:   0, // Not applicable for ETH/Base/BSC chains
+		Chain:      strings.ToLower(chain),
+		LastUpdate: time.Now(),
+	}, nil
+}
+
+// getTokenPriceOnChain fetches token price on a specific chain
+func getTokenPriceOnChain(tokenAddress, symbol, chain string) (*GMGNTokenPrice, error) {
+	switch strings.ToLower(chain) {
+	case "sol":
+		return getSOLTokenPrice(tokenAddress, symbol)
+	case "eth", "base", "bsc":
+		return GetMultiChainTokenPrice(tokenAddress, symbol, chain)
+	default:
+		return nil, fmt.Errorf("unsupported chain: %s", chain)
+	}
+}
+
+// getSOLTokenPrice fetches token price on Solana chain
+func getSOLTokenPrice(tokenAddress, symbol string) (*GMGNTokenPrice, error) {
+	// If the token is SOL itself, return a simple response
+	if tokenAddress == SOLAddress {
+		return getGMGNSOLPrice(symbol)
+	}
+
+	// Default parameters for the swap route API
+	params := createDefaultParams(SOLAddress, tokenAddress, DefaultSOLAmount)
+
+	// Get the price using the swap route API
+	response, err := fetchSwapRoute(params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse amounts from response
+	_, amountOutUSD, inAmount, outAmount, err := parseAmounts(response)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate the SOL price (how many tokens per 1 SOL)
+	// Adjust for decimals
+	inAmountInSOL := inAmount / math.Pow10(response.Data.Quote.InDecimals)
+	outAmountInTokens := outAmount / math.Pow10(response.Data.Quote.OutDecimals)
+
+	// Avoid division by zero
+	if inAmountInSOL == 0 {
+		return nil, fmt.Errorf("invalid calculation: inAmountInSOL is zero")
+	}
+
+	solPrice := outAmountInTokens / inAmountInSOL
+
+	// Calculate the USD price (USD per token)
+	// Avoid division by zero
+	if outAmountInTokens == 0 {
+		return nil, fmt.Errorf("invalid calculation: outAmountInTokens is zero")
+	}
+
+	usdPrice := amountOutUSD / outAmountInTokens
+
+	// 保存到数据库
+	SaveGMGNPriceToDb(tokenAddress, symbol, usdPrice, solPrice, "sol")
+
+	return &GMGNTokenPrice{
+		Address:    tokenAddress,
+		Symbol:     symbol,
+		USDPrice:   usdPrice,
+		SOLPrice:   solPrice,
+		Chain:      "sol",
+		LastUpdate: time.Now(),
+	}, nil
+}
+
+// GetETHTokenPrice is a convenience function for ETH chain tokens
+func GetETHTokenPrice(tokenAddress, symbol string) (*GMGNTokenPrice, error) {
+	return getTokenPriceOnChain(tokenAddress, symbol, "eth")
+}
+
+// GetBaseTokenPrice is a convenience function for Base chain tokens
+func GetBaseTokenPrice(tokenAddress, symbol string) (*GMGNTokenPrice, error) {
+	return getTokenPriceOnChain(tokenAddress, symbol, "base")
+}
+
+// GetBSCTokenPrice is a convenience function for BSC chain tokens
+func GetBSCTokenPrice(tokenAddress, symbol string) (*GMGNTokenPrice, error) {
+	return getTokenPriceOnChain(tokenAddress, symbol, "bsc")
+}
+
+// GetSOLTokenPrice is a convenience function for SOL chain tokens
+func GetSOLTokenPrice(tokenAddress, symbol string) (*GMGNTokenPrice, error) {
+	return getTokenPriceOnChain(tokenAddress, symbol, "sol")
+}
+
+func SaveGMGNPriceToDb(tokenAddress string, symbol string, usdPrice float64, solPrice float64, chain string) {
 	// 创建价格数据对象
 	priceData := map[string]interface{}{
 		"address":     tokenAddress,
@@ -352,7 +623,7 @@ func SaveGMGNPriceToDb(tokenAddress string, symbol string, usdPrice float64, sol
 			Name:            symbol, // 使用Symbol作为Name，后续可以更新
 			Decimals:        8,      // 默认小数位数，可以根据实际情况调整
 			ContractAddress: tokenAddress,
-			Chain:           "solana", // GMGN是Solana链上的
+			Chain:           chain, // 使用传入的链名称
 			IsActive:        true,
 			CreatedAt:       now,
 			UpdatedAt:       now,
@@ -375,7 +646,7 @@ func SaveGMGNPriceToDb(tokenAddress string, symbol string, usdPrice float64, sol
 			currenc.ContractAddress = tokenAddress
 		}
 		if currenc.Chain == "" {
-			currenc.Chain = "solana"
+			currenc.Chain = chain
 		}
 
 		err = currency.UpdateCurrency(ctx, currenc)
@@ -417,4 +688,75 @@ func SaveGMGNPriceToDb(tokenAddress string, symbol string, usdPrice float64, sol
 	} else {
 		log.Printf("已保存 %s GMGN市场数据到数据库，ID: %d", symbol, marketData.ID)
 	}
+}
+
+// getETHPrice fetches ETH price using ETH->USDC route
+func getETHPrice(symbol string) (*GMGNTokenPrice, error) {
+	// Use ETH native address to get price against USDC
+	params := MultiChainRouteParams{
+		TokenInChain:    "eth",
+		TokenOutChain:   "eth",
+		TokenInAddress:  ETHAddress, // Native ETH
+		TokenOutAddress: USDCAddress,
+		InAmount:        DefaultETHAmount,
+		Src:             "gmgn",
+	}
+
+	// Fetch route data
+	response, err := fetchMultiChainRoute(params, true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch ETH route data: %w", err)
+	}
+
+	if len(response.Data.Routes) == 0 {
+		return nil, fmt.Errorf("no routes found for ETH")
+	}
+
+	// Use the first route
+	route := response.Data.Routes[0]
+
+	// Parse amounts
+	amountIn, err := strconv.ParseFloat(route.AmountIn, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse amount_in: %w", err)
+	}
+
+	amountOut, err := strconv.ParseFloat(route.AmountOut, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse amount_out: %w", err)
+	}
+
+	// Parse USD prices
+	tokenInUSDPrice, err := strconv.ParseFloat(route.TokenInUSDPrice, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token_in_usd_price: %w", err)
+	}
+
+	tokenOutUSDPrice, err := strconv.ParseFloat(route.TokenOutUSDPrice, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token_out_usd_price: %w", err)
+	}
+
+	// Calculate USD price
+	var usdPrice float64
+
+	// USD price calculation
+	if tokenInUSDPrice > 0 {
+		usdPrice = tokenInUSDPrice
+	} else if tokenOutUSDPrice > 0 && amountOut > 0 {
+		// Calculate based on output token USD price
+		usdPrice = (tokenOutUSDPrice * amountOut) / amountIn
+	}
+
+	// 保存到数据库 (use WETH address for consistency)
+	SaveGMGNPriceToDb(WETHAddress, symbol, usdPrice, 0, "eth")
+
+	return &GMGNTokenPrice{
+		Address:    WETHAddress, // Return WETH address for consistency
+		Symbol:     symbol,
+		USDPrice:   usdPrice,
+		SOLPrice:   0,
+		Chain:      "eth",
+		LastUpdate: time.Now(),
+	}, nil
 }

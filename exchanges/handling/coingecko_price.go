@@ -16,13 +16,8 @@ import (
 )
 
 // CoinGecko API URL constants
-const (
-	CoinGeckoBaseURL = "https://api.coingecko.com/api/v3"
-	PriceEndpoint    = "/simple/price"
-
-	// Default values
-	DefaultTimeout = 15 * time.Second
-)
+// CoinGecko specific constants (using common constants from constants.go)
+// Note: Common constants like CoinGeckoBaseURL, PriceEndpoint, DefaultTimeout are now defined in constants.go
 
 // CoinGeckoToken 表示CoinGecko平台上的代币
 type CoinGeckoToken struct {
@@ -132,10 +127,10 @@ func getTokenPrices(tokens []CoinGeckoToken) (CoinGeckoPriceResponse, error) {
 
 	// 创建API URL
 	url := fmt.Sprintf("%s%s?ids=%s&vs_currencies=usd",
-		CoinGeckoBaseURL, PriceEndpoint, joinIDs(ids))
+		CoinGeckoBaseURL, CommonPriceEndpoint, joinIDs(ids))
 
 	// 创建HTTP客户端
-	client := &http.Client{Timeout: DefaultTimeout}
+	client := &http.Client{Timeout: CommonDefaultTimeout}
 
 	// 发送请求
 	resp, err := client.Get(url)
@@ -211,15 +206,15 @@ func MonitorCoinGeckoPrice(coinGeckoID string, symbol string, chain string, inte
 // MonitorMultipleCoinGeckoTokens 同时监控多个CoinGecko代币的价格
 func MonitorMultipleCoinGeckoTokens(tokens []CoinGeckoTokenConfig, interval time.Duration) chan struct{} {
 	log.Printf("开始监控 %d 个代币在 CoinGecko 上的价格，间隔: %v", len(tokens), interval)
-	
+
 	// 创建一个全局停止信号通道
 	stopCh := make(chan struct{})
-	
+
 	// 为每个代币启动一个监控协程
 	for _, token := range tokens {
 		go MonitorCoinGeckoPrice(token.CoinGeckoID, token.Symbol, token.Chain, interval, stopCh)
 	}
-	
+
 	return stopCh
 }
 
@@ -228,10 +223,10 @@ func SaveCoinGeckoPriceToDb(coinGeckoID string, symbol string, chain string, usd
 	// 创建价格数据对象
 	priceData := map[string]interface{}{
 		"coingecko_id": coinGeckoID,
-		"symbol":      symbol,
-		"usd_price":   usdPrice,
-		"chain":       chain,
-		"last_update": time.Now(),
+		"symbol":       symbol,
+		"usd_price":    usdPrice,
+		"chain":        chain,
+		"last_update":  time.Now(),
 	}
 
 	// 将原始数据转换为JSON字符串
@@ -250,7 +245,7 @@ func SaveCoinGeckoPriceToDb(coinGeckoID string, symbol string, chain string, usd
 			Symbol:          symbol,
 			Name:            symbol, // 使用Symbol作为Name，后续可以更新
 			Decimals:        18,     // 默认小数位数，可以根据实际情况调整
-			ContractAddress: "",    // CoinGecko不提供合约地址
+			ContractAddress: "",     // CoinGecko不提供合约地址
 			Chain:           chain,  // 使用提供的链信息
 			IsActive:        true,
 			CreatedAt:       now,
@@ -289,7 +284,7 @@ func SaveCoinGeckoPriceToDb(coinGeckoID string, symbol string, chain string, usd
 
 	// 创建 MarketData 对象
 	marketData := &sqlite3.MarketData{
-		ExchangeID:    4, // 假设 CoinGecko 的 exchange_id 为 4，实际应该从配置或数据库中获取
+		ExchangeID:    4,                    // 假设 CoinGecko 的 exchange_id 为 4，实际应该从配置或数据库中获取
 		TradingPairID: int64(tradingPairID), // 使用货币ID作为交易对ID
 		Timestamp:     time.Now(),
 		LastPrice:     usdPrice,
@@ -324,7 +319,7 @@ func CoinGeckoExample() {
 	} else {
 		log.Printf("ETH价格: $%.4f\n", ethPrice.USDPrice)
 	}
-	
+
 	// 示例2: 获取多个代币价格
 	log.Println("示例2: 获取多个代币价格")
 	tokens := []CoinGeckoToken{
@@ -332,7 +327,7 @@ func CoinGeckoExample() {
 		{Symbol: "ETH", CoinGeckoID: "ethereum", Chain: "ethereum"},
 		{Symbol: "USDT", CoinGeckoID: "tether", Chain: "ethereum"},
 	}
-	
+
 	prices, err := GetMultipleTokenPrices(tokens)
 	if err != nil {
 		log.Printf("获取多个代币价格失败: %v\n", err)
@@ -341,7 +336,7 @@ func CoinGeckoExample() {
 			log.Printf("%s价格: $%.4f\n", symbol, price.USDPrice)
 		}
 	}
-	
+
 	// 示例3: 监控多个代币价格
 	log.Println("示例3: 监控多个代币价格")
 	tokenConfigs := []CoinGeckoTokenConfig{
@@ -349,10 +344,10 @@ func CoinGeckoExample() {
 		{Symbol: "ETH", CoinGeckoID: "ethereum", Chain: "ethereum"},
 		{Symbol: "USDT", CoinGeckoID: "tether", Chain: "ethereum"},
 	}
-	
+
 	// 每30秒更新一次价格
 	stopCh := MonitorMultipleCoinGeckoTokens(tokenConfigs, 30*time.Second)
-	
+
 	// 运行5分钟后停止
 	log.Println("将在5分钟后停止监控")
 	time.Sleep(5 * time.Minute)

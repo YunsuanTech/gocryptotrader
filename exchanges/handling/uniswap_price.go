@@ -10,28 +10,17 @@ import (
 	"time"
 
 	"gocryptotrader/database/models/sqlite3"
-	currency "gocryptotrader/database/repository/currency"
+	"gocryptotrader/database/repository/currency"
 	marketdata "gocryptotrader/database/repository/market_data"
 
+	"github.com/daoleno/uniswapv3-sdk/examples/contract"
+	"github.com/daoleno/uniswapv3-sdk/examples/helper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// Uniswap API and contract constants
-const (
-	// Ethereum RPC URL
-	EthereumRPCURL = "https://mainnet.infura.io/v3/154e98baa16348e5ac3ad1fc05f9e257"
-
-	// Token address constants
-	WETHAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" // WETH (以太坊主网)
-	UniswapUSDCAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" // USDC (以太坊主网)
-
-	// Uniswap V3 Quoter contract address
-	UniswapV3QuoterAddress = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6"
-
-	// Default values
-	UniswapDefaultFee = 500 // 0.05% fee tier
-)
+// Uniswap specific constants (using common constants from constants.go)
+// Note: Common constants like EthereumRPCURL, ETHAddress, USDCAddress, UniswapDefaultFee are now defined in constants.go
 
 // UniswapTokenPrice represents the calculated price information for a token
 type UniswapTokenPrice struct {
@@ -41,9 +30,6 @@ type UniswapTokenPrice struct {
 	ETHPrice   float64   `json:"eth_price"`
 	LastUpdate time.Time `json:"last_update"`
 }
-
-// UniswapQuoterABI is the ABI for the Uniswap V3 Quoter contract
-const UniswapQuoterABI = `[{"inputs":[{"internalType":"address","name":"tokenIn","type":"address"},{"internalType":"address","name":"tokenOut","type":"address"},{"internalType":"uint24","name":"fee","type":"uint24"},{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint160","name":"sqrtPriceLimitX96","type":"uint160"}],"name":"quoteExactInputSingle","outputs":[{"internalType":"uint256","name":"amountOut","type":"uint256"}],"stateMutability":"nonpayable","type":"function"}]`
 
 // GetUniswapTokenPrice fetches the price of a token in USD and ETH
 func GetUniswapTokenPrice(tokenAddress string, symbol string) (*UniswapTokenPrice, error) {
@@ -62,21 +48,20 @@ func GetUniswapTokenPrice(tokenAddress string, symbol string) (*UniswapTokenPric
 		return nil, fmt.Errorf("failed to connect to Ethereum network: %w", err)
 	}
 
-	// Create a new instance of the Quoter contract
-	quoterAddress := common.HexToAddress(UniswapV3QuoterAddress)
-	abi, err := parseQuoterABI()
+	// Create quoter contract instance
+	quoterContract, err := contract.NewUniswapv3Quoter(common.HexToAddress(helper.ContractV3Quoter), client)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse Quoter ABI: %w", err)
+		return nil, fmt.Errorf("failed to create quoter contract: %w", err)
 	}
 
 	// Get token/ETH price
-	ethPrice, err := getTokenETHPrice(client, abi, tokenAddress, quoterAddress)
+	ethPrice, err := getTokenETHPrice(quoterContract, tokenAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token/ETH price: %w", err)
 	}
 
 	// Get ETH/USD price
-	ethUSDPrice, err := getETHUSDPriceValue(client, abi, quoterAddress)
+	ethUSDPrice, err := getETHUSDPriceValue(quoterContract)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ETH/USD price: %w", err)
 	}
@@ -104,15 +89,14 @@ func getETHUSDPrice(symbol string) (*UniswapTokenPrice, error) {
 		return nil, fmt.Errorf("failed to connect to Ethereum network: %w", err)
 	}
 
-	// Create a new instance of the Quoter contract
-	quoterAddress := common.HexToAddress(UniswapV3QuoterAddress)
-	abi, err := parseQuoterABI()
+	// Create quoter contract instance
+	quoterContract, err := contract.NewUniswapv3Quoter(common.HexToAddress(helper.ContractV3Quoter), client)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse Quoter ABI: %w", err)
+		return nil, fmt.Errorf("failed to create quoter contract: %w", err)
 	}
 
 	// Get ETH/USD price
-	ethUSDPrice, err := getETHUSDPriceValue(client, abi, quoterAddress)
+	ethUSDPrice, err := getETHUSDPriceValue(quoterContract)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ETH/USD price: %w", err)
 	}
@@ -129,59 +113,78 @@ func getETHUSDPrice(symbol string) (*UniswapTokenPrice, error) {
 	}, nil
 }
 
-// parseQuoterABI parses the Uniswap V3 Quoter ABI
-func parseQuoterABI() (interface{}, error) {
-	// In a real implementation, you would use abigen to generate Go bindings
-	// For simplicity, we'll return the ABI string
-	return UniswapQuoterABI, nil
-}
-
 // getTokenETHPrice gets the price of a token in ETH
-func getTokenETHPrice(client *ethclient.Client, abi interface{}, tokenAddress string, quoterAddress common.Address) (float64, error) {
-	// In a real implementation, you would use the contract bindings to call the contract
-	// For this example, we'll simulate a response
-	
-	// Create a token amount of 1 token with 18 decimals
-	// This would be used in the actual contract call
-	_ = new(big.Int).Mul(big.NewInt(1), big.NewInt(int64(math.Pow10(18))))
-	
-	// Call the Uniswap V3 Quoter contract
-	// This is a simplified version; in reality, you would use the contract bindings
-	// to call the quoteExactInputSingle function
-	
-	// Simulate a response for demonstration purposes
-	// In a real implementation, you would get this from the contract call
-	amountOut := new(big.Int).Mul(big.NewInt(100), big.NewInt(int64(math.Pow10(6)))) // Example: 100 USDC
-	
-	// Convert to float64
+func getTokenETHPrice(quoterContract *contract.Uniswapv3Quoter, tokenAddress string) (float64, error) {
+	// 设置代币对：Token 和 WETH
+	token0 := common.HexToAddress(tokenAddress)
+	token1 := common.HexToAddress(WETHAddress)
+
+	fee := big.NewInt(int64(CommonUniswapDefaultFee))  // 0.05%费率池
+	amountIn := helper.FloatStringToBigInt("1.00", 18) // 查询1个代币的价格
+	sqrtPriceLimitX96 := big.NewInt(0)                 // 无价格限制
+
+	var out []interface{}
+	rawCaller := &contract.Uniswapv3QuoterRaw{Contract: quoterContract}
+
+	// 调用合约获取兑换率
+	err := rawCaller.Call(nil, &out, "quoteExactInputSingle", token0, token1,
+		fee, amountIn, sqrtPriceLimitX96)
+	if err != nil {
+		return 0, fmt.Errorf("failed to call contract: %w", err)
+	}
+
+	// 检查并处理结果
+	if len(out) == 0 {
+		return 0, fmt.Errorf("no valid result returned")
+	}
+
+	amountOut, ok := out[0].(*big.Int)
+	if !ok {
+		return 0, fmt.Errorf("invalid result type")
+	}
+
+	// 将结果转换为可读格式（WETH有18位小数）
 	amountOutFloat := new(big.Float).SetInt(amountOut)
-	result, _ := new(big.Float).Quo(amountOutFloat, big.NewFloat(math.Pow10(6))).Float64()
-	
-	return result, nil
+	ethPrice, _ := new(big.Float).Quo(amountOutFloat, big.NewFloat(math.Pow10(18))).Float64()
+
+	return ethPrice, nil
 }
 
 // getETHUSDPriceValue gets the price of ETH in USD
-func getETHUSDPriceValue(client *ethclient.Client, abi interface{}, quoterAddress common.Address) (float64, error) {
-	// In a real implementation, you would use the contract bindings to call the contract
-	// For this example, we'll simulate a response
-	
-	// Create an ETH amount of 1 ETH with 18 decimals
-	// This would be used in the actual contract call
-	_ = new(big.Int).Mul(big.NewInt(1), big.NewInt(int64(math.Pow10(18))))
-	
-	// Call the Uniswap V3 Quoter contract
-	// This is a simplified version; in reality, you would use the contract bindings
-	// to call the quoteExactInputSingle function
-	
-	// Simulate a response for demonstration purposes
-	// In a real implementation, you would get this from the contract call
-	amountOut := new(big.Int).Mul(big.NewInt(1800), big.NewInt(int64(math.Pow10(6)))) // Example: 1800 USDC
-	
-	// Convert to float64
+func getETHUSDPriceValue(quoterContract *contract.Uniswapv3Quoter) (float64, error) {
+	// 设置代币对：WETH 和 USDC
+	token0 := common.HexToAddress(WETHAddress)
+	token1 := common.HexToAddress(USDCAddress)
+
+	fee := big.NewInt(int64(CommonUniswapDefaultFee))  // 0.05%费率池（WETH/USDC常用费率）
+	amountIn := helper.FloatStringToBigInt("1.00", 18) // 查询1个ETH的价格
+	sqrtPriceLimitX96 := big.NewInt(0)                 // 无价格限制
+
+	var out []interface{}
+	rawCaller := &contract.Uniswapv3QuoterRaw{Contract: quoterContract}
+
+	// 调用合约获取兑换率
+	err := rawCaller.Call(nil, &out, "quoteExactInputSingle", token0, token1,
+		fee, amountIn, sqrtPriceLimitX96)
+	if err != nil {
+		return 0, fmt.Errorf("failed to call contract: %w", err)
+	}
+
+	// 检查并处理结果
+	if len(out) == 0 {
+		return 0, fmt.Errorf("no valid result returned")
+	}
+
+	amountOut, ok := out[0].(*big.Int)
+	if !ok {
+		return 0, fmt.Errorf("invalid result type")
+	}
+
+	// 将结果转换为可读格式（USDC有6位小数）
 	amountOutFloat := new(big.Float).SetInt(amountOut)
-	result, _ := new(big.Float).Quo(amountOutFloat, big.NewFloat(math.Pow10(6))).Float64()
-	
-	return result, nil
+	usdPrice, _ := new(big.Float).Quo(amountOutFloat, big.NewFloat(math.Pow10(6))).Float64()
+
+	return usdPrice, nil
 }
 
 // SaveUniswapPriceToDb saves Uniswap price data to the database
@@ -279,22 +282,22 @@ func SaveUniswapPriceToDb(tokenAddress string, symbol string, usdPrice float64, 
 	}
 }
 
-// UniswapExample demonstrates how to use the Uniswap price module
+// UniswapExample 演示如何使用Uniswap价格查询功能
 func UniswapExample() {
-	// Get ETH price in USD
+	// 获取ETH价格
 	ethPrice, err := GetUniswapTokenPrice(WETHAddress, "ETH")
 	if err != nil {
-		log.Printf("Failed to get ETH price: %v", err)
+		log.Printf("获取ETH价格失败: %v", err)
 		return
 	}
-	log.Printf("ETH Price: $%.2f", ethPrice.USDPrice)
+	log.Printf("ETH价格: $%.2f", ethPrice.USDPrice)
 
-	// Get a token price (e.g., UNI token)
-	uniTokenAddress := "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984" // UNI token address
-	uniPrice, err := GetUniswapTokenPrice(uniTokenAddress, "UNI")
+	// 获取UNI代币价格
+	uniAddress := "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984" // UNI代币地址
+	uniPrice, err := GetUniswapTokenPrice(uniAddress, "UNI")
 	if err != nil {
-		log.Printf("Failed to get UNI price: %v", err)
+		log.Printf("获取UNI价格失败: %v", err)
 		return
 	}
-	log.Printf("UNI Price: $%.2f, %.8f ETH", uniPrice.USDPrice, uniPrice.ETHPrice)
+	log.Printf("UNI价格: $%.2f, ETH价格: %.6f ETH", uniPrice.USDPrice, uniPrice.ETHPrice)
 }
