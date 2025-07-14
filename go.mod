@@ -93,7 +93,7 @@ require (
 	github.com/ethereum/go-ethereum v1.15.8
 	github.com/friendsofgo/errors v0.9.2 // indirect
 	github.com/gagliardetto/solana-go v1.12.0
-	github.com/go-telegram/bot v1.14.0
+	github.com/go-telegram/bot v1.16.0
 	github.com/gorilla/mux v1.8.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
