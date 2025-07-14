@@ -23,7 +23,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.5
 	golang.org/x/crypto v0.36.0
 	golang.org/x/term v0.30.0
-	golang.org/x/text v0.23.0
+	golang.org/x/text v0.27.0
 	golang.org/x/time v0.11.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250204164813-702378808489
 	google.golang.org/grpc v1.70.0
@@ -82,7 +82,7 @@ require (
 	go.uber.org/ratelimit v0.3.1 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d // indirect
-	golang.org/x/sync v0.12.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
