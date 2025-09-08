@@ -1,6 +1,6 @@
 module gocryptotrader
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/bogdanfinn/fhttp v0.5.36
@@ -22,7 +22,7 @@ require (
 	github.com/thrasher-corp/sqlboiler v1.0.1-0.20191001234224-71e17f37a85e
 	github.com/urfave/cli/v2 v2.27.5
 	golang.org/x/crypto v0.36.0
-	golang.org/x/term v0.30.0
+	golang.org/x/term v0.35.0
 	golang.org/x/text v0.23.0
 	golang.org/x/time v0.11.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250204164813-702378808489
@@ -104,7 +104,7 @@ require (
 	github.com/volatiletech/sqlboiler v3.7.1+incompatible
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250204164813-702378808489 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
